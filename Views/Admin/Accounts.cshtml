@@ -1,0 +1,27 @@
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+}
+
+<section class="placeholder-shell">
+    <div class="overview-card">
+        <p class="eyebrow">Quản trị người dùng</p>
+        <h1>Trang quản lý quyền tài khoản</h1>
+        <p class="lead-copy">
+            Đây là trang nền để bước tiếp theo mình thiết kế quản lý tài khoản, nhóm quyền,
+            chi nhánh phụ trách và phạm vi truy cập của từng nhân viên.
+        </p>
+
+        <div class="account-chip-row">
+            <div class="account-chip">
+                <span>Mục tiêu</span>
+                <strong>Phân quyền theo tài khoản</strong>
+            </div>
+            <div class="account-chip">
+                <span>Áp dụng</span>
+                <strong>Admin, thu mua, kế toán, kho</strong>
+            </div>
+        </div>
+
+        <a asp-controller="Dashboard" asp-action="Index" class="inline-action">Quay lại dashboard admin</a>
+    </div>
+</section>

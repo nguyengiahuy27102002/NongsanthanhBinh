@@ -1,0 +1,16 @@
+@model string
+@{
+    ViewData["Title"] = "Đang phát triển";
+}
+
+<section class="placeholder-shell">
+    <div class="overview-card">
+        <p class="eyebrow">Tính năng đang phát triển</p>
+        <h1>@Model</h1>
+        <p class="lead-copy">
+            Khu vực này đã có sẵn đường dẫn từ dashboard admin. Mình có thể tiếp tục thiết kế riêng
+            từng phân hệ như phiếu nhập cà phê, phiếu nhập tiêu, kho hoặc báo cáo.
+        </p>
+        <a asp-controller="Dashboard" asp-action="Index" class="inline-action">Quay lại dashboard</a>
+    </div>
+</section>

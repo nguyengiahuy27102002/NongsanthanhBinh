@@ -1,0 +1,492 @@
+@model DuongVanDung.WebApp.Models.Auth.DashboardViewModel
+@using Microsoft.AspNetCore.Html
+@using DuongVanDung.WebApp.Models.Auth
+@using System.Globalization
+@{
+    ViewData["Title"] = "Dashboard kho hàng";
+}
+
+@functions {
+    private static string FormatCompact(double value)
+    {
+        if (Math.Abs(value) >= 1_000_000)
+        {
+            return $"{value / 1_000_000:0.#}M";
+        }
+
+        if (Math.Abs(value) >= 1_000)
+        {
+            return $"{value / 1_000:0.#}K";
+        }
+
+        return value.ToString("0.#", CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatNumber(double value)
+    {
+        return value.ToString("#,0.##", CultureInfo.InvariantCulture);
+    }
+
+    private static string RenderLinePath(IReadOnlyList<double> values, double maxValue, double width, double height)
+    {
+        if (values.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var stepX = values.Count > 1 ? width / (values.Count - 1) : width;
+        var points = new List<string>();
+
+        for (var i = 0; i < values.Count; i++)
+        {
+            var x = i * stepX;
+            var y = height - ((values[i] / maxValue) * height);
+            points.Add($"{x:0.##},{y:0.##}");
+        }
+
+        return string.Join(" ", points);
+    }
+
+    private static string RenderBarSegments(IReadOnlyList<double> values, double maxValue, double chartHeight, double barWidth, double gap, double offset)
+    {
+        var segments = new List<string>();
+
+        for (var i = 0; i < values.Count; i++)
+        {
+            var value = values[i];
+            var height = maxValue == 0 ? 0 : Math.Abs(value / maxValue) * chartHeight;
+            var x = offset + (i * gap);
+            var y = value >= 0 ? chartHeight - height : chartHeight;
+            segments.Add($"<rect x='{x:0.##}' y='{y:0.##}' width='{barWidth:0.##}' height='{height:0.##}' rx='7'></rect>");
+        }
+
+        return string.Join(string.Empty, segments);
+    }
+
+    private static string RenderDonutSegments(IReadOnlyList<DashboardChartPoint> points)
+    {
+        var total = points.Sum(x => x.Value);
+        if (total <= 0)
+        {
+            return string.Empty;
+        }
+
+        const double radius = 52;
+        var circumference = 2 * Math.PI * radius;
+        var offset = 0d;
+        var segments = new List<string>();
+
+        foreach (var point in points)
+        {
+            var length = circumference * (point.Value / total);
+            segments.Add($"<circle cx='70' cy='70' r='{radius}' fill='none' stroke='{point.Color}' stroke-width='20' stroke-dasharray='{length:0.##} {circumference:0.##}' stroke-dashoffset='{-offset:0.##}' transform='rotate(-90 70 70)'></circle>");
+            offset += length;
+        }
+
+        return string.Join(string.Empty, segments);
+    }
+
+    private static IHtmlContent RenderIcon(string name)
+    {
+        var svg = name switch
+        {
+            "home" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M3 11.5L12 4l9 7.5V21h-6v-5h-6v5H3z'/></svg>",
+            "warehouse" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M3 10l9-6 9 6v10h-4v-6H7v6H3z'/></svg>",
+            "inbound" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 4v10m0 0l-4-4m4 4l4-4M5 18h14v2H5z'/></svg>",
+            "outbound" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 20V10m0 0l-4 4m4-4l4 4M5 4h14v2H5z'/></svg>",
+            "database" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 4c4.97 0 9 1.34 9 3s-4.03 3-9 3-9-1.34-9-3 4.03-3 9-3zm-9 6v4c0 1.66 4.03 3 9 3s9-1.34 9-3v-4m-18 4v4c0 1.66 4.03 3 9 3s9-1.34 9-3v-4'/></svg>",
+            "report" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M6 3h9l5 5v13H6zM14 3v5h5M9 14h6M9 18h6M9 10h3'/></svg>",
+            "cashier" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 7h16v10H4zM7 10h10M8 15h2M14 15h2'/></svg>",
+            "customers" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M9 11a3 3 0 100-6 3 3 0 000 6zm7 1a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM4 20a5 5 0 0110 0M13 20a4 4 0 018 0'/></svg>",
+            "transfer" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M7 7h11l-2-2m2 2l-2 2M17 17H6l2-2m-2 2l2 2'/></svg>",
+            "account" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 12a4 4 0 100-8 4 4 0 000 8zm-7 9a7 7 0 0114 0'/></svg>",
+            "price" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 7V4h14v3M7 10h10M8 20h8M10 10v10M14 10v10'/></svg>",
+            "coffee" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12.5 3c2.5 3 2.5 5.5 0 8 3-1.3 4.6-4.9 3.4-8-1.2.6-2.3.6-3.4 0zM7 12h9a4 4 0 010 8H9a5 5 0 01-2-8z'/></svg>",
+            "pepper" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 4a4 4 0 014 4c0 1.6-.6 2.6-1.8 4.1L12 15l-2.2-2.9C8.6 10.6 8 9.6 8 8a4 4 0 014-4zm0 12c3.3 0 6 1.8 6 4H6c0-2.2 2.7-4 6-4z'/></svg>",
+            "scale" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 4v16M5 8h14M7 8l-3 5h6l-3-5zm10 0l-3 5h6l-3-5zM9 20h6'/></svg>",
+            "user" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0'/></svg>",
+            "inventory" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 7l8-4 8 4-8 4-8-4zm0 4l8 4 8-4m-16 4l8 4 8-4'/></svg>",
+            "weight" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M9 8a3 3 0 116 0m-8 0h10l3 12H4z'/></svg>",
+            "standard" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3l2.8 5.7L21 9.6l-4.5 4.4 1.1 6.3L12 17.5 6.4 20.3l1.1-6.3L3 9.6l6.2-.9z'/></svg>",
+            "retail" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 6h14l-1 4H6zM7 10h10v10H7zM9 14h6'/></svg>",
+            "wholesale" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 8h16v4H4zM6 12h5v8H6zM13 12h5v8h-5z'/></svg>",
+            "money" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 7h16v10H4zM12 9v6M9.5 10.5c0-.8 1.1-1.5 2.5-1.5s2.5.7 2.5 1.5-1.1 1.2-2.5 1.5-2.5.7-2.5 1.5 1.1 1.5 2.5 1.5 2.5-.7 2.5-1.5'/></svg>",
+            "debt" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 7h14v10H5zM8 10h8M8 14h5'/></svg>",
+            "expense" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 6h14M7 10h10M9 14h6M11 18h2'/></svg>",
+            "profit" => "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 17l4-4 3 3 7-7M15 9h4v4'/></svg>",
+            _ => "<svg viewBox='0 0 24 24' aria-hidden='true'><circle cx='12' cy='12' r='8'/></svg>"
+        };
+
+        return new HtmlString(svg);
+    }
+}
+
+<section class="dashboard-shell dashboard-shell--inventory">
+    <aside class="dashboard-sidebar">
+        <div class="dashboard-sidebar__inner">
+            <div class="sidebar-brand-card">
+                <div class="brand-mark brand-mark--dashboard">TB</div>
+                <div>
+                    <p class="eyebrow">Bảng điều khiển</p>
+                    <h1>Thanh Bình</h1>
+                </div>
+            </div>
+
+            <div class="sidebar-user-card">
+                <div class="metric-icon metric-icon--user">
+                    @RenderIcon("user")
+                </div>
+                <div>
+                    <span>Tài khoản đang dùng</span>
+                    <strong>@Model.DisplayName</strong>
+                    <small>@Model.Username • @string.Join(", ", Model.Roles)</small>
+                </div>
+            </div>
+
+            <nav class="dashboard-menu">
+                @foreach (var item in Model.MenuItems)
+                {
+                    var isActive = item.Action == "Index";
+                    <a asp-controller="@item.Controller"
+                       asp-action="@item.Action"
+                       asp-route-featureKey="@item.FeatureKey"
+                       class="dashboard-menu__item @(isActive ? "is-active" : string.Empty)">
+                        <span class="metric-icon metric-icon--menu">
+                            @RenderIcon(item.Icon)
+                        </span>
+                        <span class="dashboard-menu__copy">
+                            <strong>@item.Title</strong>
+                            <small>@item.Description</small>
+                        </span>
+                    </a>
+                }
+            </nav>
+        </div>
+    </aside>
+
+    <div class="dashboard-content">
+        <section class="inventory-hero">
+            <div class="inventory-hero__copy">
+                <p class="eyebrow">Thông tin tổng hợp</p>
+                <h2>Thông tin tổng hợp của các kho</h2>
+            </div>
+
+            <div class="commodity-summary-grid">
+                @foreach (var commodity in Model.CommoditySummaries)
+                {
+                    <article class="commodity-summary-card commodity-summary-card--@commodity.Theme">
+                        <div class="commodity-summary-card__header">
+                            <div class="product-panel__title">
+                                <span class="metric-icon metric-icon--@commodity.Theme">
+                                    @RenderIcon(commodity.Theme)
+                                </span>
+                                <div>
+                                    <h3>@commodity.Name</h3>
+                                    <p>Thông tin tổng hợp theo mặt hàng</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="inventory-summary-grid">
+                            @foreach (var summary in commodity.Metrics)
+                            {
+                                <article class="inventory-summary-card">
+                                    <div class="metric-icon metric-icon--summary metric-icon--@summary.Icon">
+                                        @RenderIcon(summary.Icon)
+                                    </div>
+                                    <div>
+                                        <p>@summary.Label</p>
+                                        <h3>@summary.Value</h3>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+
+        @if (Model.ChartSection is not null)
+        {
+            var chart = Model.ChartSection;
+            var lineMax = Math.Max(1, chart.InboundSeries.SelectMany(x => x.Values).DefaultIfEmpty(0).Max());
+            var inventoryTotal = chart.InventoryShare.Sum(x => x.Value);
+            var groupedBarMax = Math.Max(1, chart.StandardSeries.SelectMany(x => x.Values).Select(Math.Abs).DefaultIfEmpty(0).Max());
+            var financeBarMax = Math.Max(1, chart.FinanceSeries.SelectMany(x => x.Values).DefaultIfEmpty(0).Max());
+            const double lineWidth = 300;
+            const double lineHeight = 130;
+            const double groupedGap = 54;
+            const double barWidth = 16;
+
+            <section class="chart-board">
+                <div class="chart-board__header">
+                    <div>
+                        <p class="eyebrow">Biểu đồ & phân tích</p>
+                        <h2>Biểu đồ mô tả tình hình kho trong tháng này</h2>
+                    </div>
+                </div>
+
+                <div class="chart-grid">
+                    <article class="chart-card">
+                        <div class="chart-card__header">
+                            <h3>Lượng nhập hàng trong tháng</h3>
+                            <span>Line chart</span>
+                        </div>
+                        <svg class="chart-svg chart-svg--line" viewBox="0 0 340 180" role="img" aria-label="Biểu đồ lượng nhập hàng của cà phê và tiêu trong tháng này">
+                            <g transform="translate(20,16)">
+                                <line x1="0" y1="130" x2="300" y2="130" class="chart-axis"></line>
+                                <line x1="0" y1="0" x2="0" y2="130" class="chart-axis"></line>
+                                @for (var i = 0; i < 4; i++)
+                                {
+                                    var y = i * 32.5;
+                                    var labelValue = lineMax - ((lineMax / 4) * i);
+                                    <g>
+                                        <line x1="0" y1="@y.ToString("0.##", CultureInfo.InvariantCulture)" x2="300" y2="@y.ToString("0.##", CultureInfo.InvariantCulture)" class="chart-gridline"></line>
+                                        <text x="-8" y="@(y + 4).ToString("0.##", CultureInfo.InvariantCulture)" class="chart-label chart-label--y">@FormatCompact(labelValue)</text>
+                                    </g>
+                                }
+                                @foreach (var series in chart.InboundSeries)
+                                {
+                                    <polyline points="@RenderLinePath(series.Values.ToArray(), lineMax, lineWidth, lineHeight)" fill="none" stroke="@series.Color" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                                    @for (var i = 0; i < series.Values.Count; i++)
+                                    {
+                                        var x = chart.InboundLabels.Count > 1 ? i * (lineWidth / (chart.InboundLabels.Count - 1)) : 0;
+                                        var y = lineHeight - ((series.Values.ElementAt(i) / lineMax) * lineHeight);
+                                        <circle cx="@x.ToString("0.##", CultureInfo.InvariantCulture)" cy="@y.ToString("0.##", CultureInfo.InvariantCulture)" r="4" fill="@series.Color"></circle>
+                                    }
+                                }
+                                @for (var i = 0; i < chart.InboundLabels.Count; i++)
+                                {
+                                    var x = chart.InboundLabels.Count > 1 ? i * (lineWidth / (chart.InboundLabels.Count - 1)) : 0;
+                                    @Html.Raw($"<text x='{x.ToString("0.##", CultureInfo.InvariantCulture)}' y='152' class='chart-label chart-label--x'>{chart.InboundLabels.ElementAt(i)}</text>")
+                                }
+                            </g>
+                        </svg>
+                        <div class="chart-legend">
+                            @foreach (var series in chart.InboundSeries)
+                            {
+                                <div class="chart-legend__item">
+                                    <span class="chart-dot" style="--chart-color:@series.Color"></span>
+                                    <strong>@series.Name</strong>
+                                    <small>@FormatNumber(series.Values.Sum()) kg</small>
+                                </div>
+                            }
+                        </div>
+                    </article>
+
+                    <article class="chart-card">
+                        <div class="chart-card__header">
+                            <h3>Tỷ trọng tổng lượng hàng theo kho</h3>
+                            <span>Pie chart</span>
+                        </div>
+                        <div class="chart-donut-layout">
+                            <svg class="chart-svg chart-svg--donut" viewBox="0 0 140 140" role="img" aria-label="Pie chart tỷ trọng tổng lượng hàng theo kho">
+                                @Html.Raw(RenderDonutSegments(chart.InventoryShare.ToArray()))
+                                <circle cx="70" cy="70" r="35" fill="#fffaf0"></circle>
+                                <text x="70" y="65" text-anchor="middle" class="chart-donut__value">@FormatCompact(inventoryTotal)</text>
+                                <text x="70" y="82" text-anchor="middle" class="chart-donut__label">kg</text>
+                            </svg>
+                            <div class="chart-legend chart-legend--stacked">
+                                @foreach (var point in chart.InventoryShare)
+                                {
+                                    var percent = inventoryTotal == 0 ? 0 : (point.Value / inventoryTotal) * 100;
+                                    <div class="chart-legend__item">
+                                        <span class="chart-dot" style="--chart-color:@point.Color"></span>
+                                        <strong>@point.Label</strong>
+                                        <small>@percent.ToString("0.#", CultureInfo.InvariantCulture)%</small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="chart-card">
+                        <div class="chart-card__header">
+                            <h3>So sánh quy chuẩn theo kho</h3>
+                            <span>Bar chart</span>
+                        </div>
+                        <svg class="chart-svg chart-svg--bar" viewBox="0 0 340 220" role="img" aria-label="Biểu đồ so sánh quy chuẩn cà phê và tiêu theo kho">
+                            <g transform="translate(24,18)">
+                                <line x1="0" y1="150" x2="290" y2="150" class="chart-axis"></line>
+                                @for (var i = 0; i < chart.StandardSeries.Count; i++)
+                                {
+                                    var series = chart.StandardSeries.ElementAt(i);
+                                    <g fill="@series.Color">
+                                        @Html.Raw(RenderBarSegments(series.Values.ToArray(), groupedBarMax, 140, barWidth, groupedGap, i == 0 ? 8 : 28))
+                                    </g>
+                                }
+                                @for (var i = 0; i < chart.WarehouseLabels.Count; i++)
+                                {
+                                    var x = 24 + (i * groupedGap);
+                                    @Html.Raw($"<text x='{x.ToString("0.##", CultureInfo.InvariantCulture)}' y='172' class='chart-label chart-label--x'>{chart.WarehouseLabels.ElementAt(i)}</text>")
+                                }
+                            </g>
+                        </svg>
+                        <div class="chart-legend">
+                            @foreach (var series in chart.StandardSeries)
+                            {
+                                <div class="chart-legend__item">
+                                    <span class="chart-dot" style="--chart-color:@series.Color"></span>
+                                    <strong>@series.Name</strong>
+                                </div>
+                            }
+                        </div>
+                    </article>
+
+                    <article class="chart-card">
+                        <div class="chart-card__header">
+                            <h3>Chi phí và nợ theo kho</h3>
+                            <span>Column chart</span>
+                        </div>
+                        <svg class="chart-svg chart-svg--bar" viewBox="0 0 340 220" role="img" aria-label="Biểu đồ chi phí và nợ theo kho">
+                            <g transform="translate(24,18)">
+                                <line x1="0" y1="150" x2="290" y2="150" class="chart-axis"></line>
+                                @for (var i = 0; i < chart.FinanceSeries.Count; i++)
+                                {
+                                    var series = chart.FinanceSeries.ElementAt(i);
+                                    <g fill="@series.Color">
+                                        @Html.Raw(RenderBarSegments(series.Values.ToArray(), financeBarMax, 140, barWidth, groupedGap, i == 0 ? 8 : 28))
+                                    </g>
+                                }
+                                @for (var i = 0; i < chart.WarehouseLabels.Count; i++)
+                                {
+                                    var x = 24 + (i * groupedGap);
+                                    @Html.Raw($"<text x='{x.ToString("0.##", CultureInfo.InvariantCulture)}' y='172' class='chart-label chart-label--x'>{chart.WarehouseLabels.ElementAt(i)}</text>")
+                                }
+                            </g>
+                        </svg>
+                        <div class="chart-legend">
+                            @foreach (var series in chart.FinanceSeries)
+                            {
+                                <div class="chart-legend__item">
+                                    <span class="chart-dot" style="--chart-color:@series.Color"></span>
+                                    <strong>@series.Name</strong>
+                                </div>
+                            }
+                        </div>
+                    </article>
+                </div>
+            </section>
+        }
+
+        <section class="warehouse-grid">
+            @foreach (var warehouse in Model.Warehouses)
+            {
+                <article class="warehouse-card">
+                    <div class="warehouse-card__header">
+                        <div>
+                            <p class="eyebrow">Khu vực kho</p>
+                            <h2>@warehouse.Name</h2>
+                        </div>
+                        <p>@warehouse.Note</p>
+                    </div>
+
+                    <div class="warehouse-products">
+                        @foreach (var product in warehouse.Products)
+                        {
+                            <section class="product-panel product-panel--@product.Theme">
+                                <div class="product-panel__header">
+                                    <div class="product-panel__title">
+                                        <span class="metric-icon metric-icon--@product.Theme">
+                                            @RenderIcon(product.Theme)
+                                        </span>
+                                        <div>
+                                            <h3>@product.Name</h3>
+                                            <p>Số liệu hiện tại tại kho</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-grid">
+                                    @foreach (var metric in product.Metrics)
+                                    {
+                                        <div class="metric-tile">
+                                            <span class="metric-icon metric-icon--tile metric-icon--@metric.Icon">
+                                                @RenderIcon(metric.Icon)
+                                            </span>
+                                            <div class="metric-tile__copy">
+                                                <span>@metric.Label</span>
+                                                <strong>@metric.Value <small>@metric.Unit</small></strong>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </section>
+                        }
+                    </div>
+
+                    <div class="warehouse-finance-grid">
+                        @foreach (var financeCard in warehouse.FinanceCards)
+                        {
+                            <article class="finance-card finance-card--@financeCard.Accent finance-card--warehouse">
+                                <div class="finance-card__header">
+                                    <span class="metric-icon metric-icon--finance">
+                                        @RenderIcon(financeCard.Icon)
+                                    </span>
+                                    <h3>@financeCard.Title</h3>
+                                </div>
+
+                                <div class="finance-metric-list">
+                                    @foreach (var metric in financeCard.Metrics)
+                                    {
+                                        <div class="finance-metric-row">
+                                            <span>@metric.Label</span>
+                                            <strong>@metric.Value <small>@metric.Unit</small></strong>
+                                        </div>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </article>
+            }
+        </section>
+
+        <section class="finance-board">
+            <div class="finance-board__grid">
+                @foreach (var financeCard in Model.FinanceCards)
+                {
+                    <article class="finance-card finance-card--@financeCard.Accent">
+                        <div class="finance-card__header">
+                            <span class="metric-icon metric-icon--finance">
+                                @RenderIcon(financeCard.Icon)
+                            </span>
+                            <h3>@financeCard.Title</h3>
+                        </div>
+
+                        <div class="finance-metric-list">
+                            @foreach (var metric in financeCard.Metrics)
+                            {
+                                <div class="finance-metric-row">
+                                    <span>@metric.Label</span>
+                                    <strong>@metric.Value <small>@metric.Unit</small></strong>
+                                </div>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <aside class="price-card">
+                <div class="finance-card__header">
+                    <span class="metric-icon metric-icon--price">
+                        @RenderIcon("price")
+                    </span>
+                    <h3>Giá sản phẩm</h3>
+                </div>
+
+                <div class="price-list">
+                    @foreach (var productPrice in Model.ProductPrices)
+                    {
+                        <label class="price-row">
+                            <span>@productPrice.Name</span>
+                            <input type="text" value="@productPrice.Price" readonly />
+                        </label>
+                    }
+                </div>
+
+                <button type="button" class="inline-action inline-action--muted">Lưu</button>
+            </aside>
+        </section>
+    </div>
+</section>

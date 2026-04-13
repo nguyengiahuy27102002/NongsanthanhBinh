@@ -1,0 +1,84 @@
+@model DuongVanDung.WebApp.Models.Auth.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = "_Layout";
+}
+
+<section class="auth-shell">
+    <div class="auth-panel auth-panel--intro">
+        <p class="eyebrow">Nông sản Thanh Bình</p>
+        <h1>Cổng đăng nhập nội bộ cho đội ngũ vận hành</h1>
+        <p class="lead-copy">
+            Một giao diện đăng nhập gọn gàng, dễ nhìn và phù hợp với hệ thống tra cứu dữ liệu nông sản của công ty.
+        </p>
+
+        <div class="agri-story">
+            <div class="story-pill">Cà phê</div>
+            <div class="story-pill">Tiêu</div>
+            <div class="story-pill">Thu mua</div>
+            <div class="story-pill">Kho hàng</div>
+            <div class="story-pill">Báo cáo</div>
+        </div>
+
+        <div class="harvest-card">
+            <p class="harvest-label">Vận hành hằng ngày</p>
+            <div class="harvest-grid">
+                <div>
+                    <strong>Nhập liệu</strong>
+                    <span>Theo dõi các phiếu mua nông sản</span>
+                </div>
+                <div>
+                    <strong>Kho</strong>
+                    <span>Tra cứu tồn và lượng hàng luân chuyển</span>
+                </div>
+                <div>
+                    <strong>Nhân viên</strong>
+                    <span>Đăng nhập bằng tài khoản được công ty cấp</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-panel auth-panel--form">
+        <div class="login-card">
+            <div class="brand-mark">TB</div>
+            <p class="login-kicker">Hệ thống nội bộ</p>
+            <h2>Đăng nhập</h2>
+            <p class="muted">Chỉ tài khoản được cấp mới có thể truy cập hệ thống.</p>
+
+            <form asp-action="Login" method="post" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+                <div class="form-row">
+                    <label asp-for="Username"></label>
+                    <input asp-for="Username" class="form-input" autocomplete="username" />
+                    <span asp-validation-for="Username" class="field-validation"></span>
+                </div>
+
+                <div class="form-row">
+                    <label asp-for="Password"></label>
+                    <input asp-for="Password" class="form-input" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="field-validation"></span>
+                </div>
+
+                <label class="remember-row">
+                    <input asp-for="RememberMe" />
+                    <span>Giữ đăng nhập trên thiết bị này</span>
+                </label>
+
+                <button type="submit" class="submit-button">Vào hệ thống</button>
+            </form>
+
+            <div class="demo-hint">
+                <strong>Tài khoản khởi tạo:</strong> <code>admin</code> / <code>Admin@123456</code>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
