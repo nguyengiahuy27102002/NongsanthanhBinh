@@ -1,8 +1,27 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Nền tảng điều hành";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="placeholder-shell">
+    <div class="overview-card">
+        <p class="eyebrow">Thanh Binh Operations Platform</p>
+        <h1>Nền tảng điều hành tập trung cho thu mua, kho và báo cáo</h1>
+        <p class="lead-copy">
+            Hệ thống đang được tái thiết kế theo hướng giao diện doanh nghiệp hiện đại:
+            rõ ràng, đáng tin cậy và tối ưu cho quy trình vận hành hằng ngày.
+        </p>
+
+        <div class="account-chip-row">
+            <div class="account-chip">
+                <span>Định hướng</span>
+                <strong>Enterprise SaaS UI</strong>
+            </div>
+            <div class="account-chip">
+                <span>Phạm vi</span>
+                <strong>Dashboard, kho, báo cáo, tài khoản</strong>
+            </div>
+        </div>
+
+        <a asp-controller="Dashboard" asp-action="Index" class="inline-action">Mở hệ thống</a>
+    </div>
+</section>

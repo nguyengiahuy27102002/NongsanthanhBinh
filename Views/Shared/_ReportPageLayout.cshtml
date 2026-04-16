@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Nông sản Thanh Bình</title>
+    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin="anonymous" />
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/customer.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/DuongVanDung.WebApp.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm portal-nav">
+            <div class="container-fluid portal-container">
+                <a class="navbar-brand portal-brand" asp-controller="Home" asp-action="Index">Nông sản Thanh Bình</a>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">← Bảng điều khiển</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark fw-semibold" asp-controller="Report" asp-action="Quality">Báo cáo chất lượng</a>
+                        </li>
+                    </ul>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="nav-logout">Đăng xuất</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="portal-container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="footer text-muted">
+        <div class="portal-container">&copy; 2026 - Nông sản Thanh Bình</div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

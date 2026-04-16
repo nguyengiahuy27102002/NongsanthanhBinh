@@ -1,0 +1,239 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var currentKho    = Context.Request.Query["kho"].ToString();
+    var currentBang   = Context.Request.Query["bang"].ToString();
+
+    bool IsTable(string kho, string bang) =>
+        currentKho == kho && currentBang == bang && currentAction == "Table";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Nông sản Thanh Bình</title>
+    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin="anonymous" />
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/customer.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/DuongVanDung.WebApp.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm portal-nav">
+            <div class="container-fluid portal-container">
+                <a class="navbar-brand portal-brand" asp-controller="Home" asp-action="Index">Nông sản Thanh Bình</a>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">← Bảng điều khiển</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark fw-semibold" asp-controller="Data" asp-action="Index">Dữ liệu</a>
+                        </li>
+                    </ul>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="nav-logout">Đăng xuất</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="portal-container">
+        <main role="main" class="pb-3">
+            <div class="cust-shell" id="dataShell">
+
+                <!-- ── CONTEXT MENU ─────────────────────────────────────── -->
+                <div id="ctxMenu" class="ctx-menu" role="menu" aria-label="Menu dữ liệu">
+                    <div class="ctx-menu__header">Dữ liệu kho</div>
+
+                    <a asp-controller="Data" asp-action="Index"
+                       class="ctx-menu__item @(currentAction == "Index" ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M3 10l9-6 9 6v10h-4v-6H7v6H3z"/></svg>
+                        Tổng quan
+                    </a>
+
+                    <div class="ctx-menu__divider"></div>
+                    <div class="ctx-menu__section">Kho Dương Văn Dũng</div>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="dvd" asp-route-bang="caphe-le"
+                       class="ctx-menu__item @(IsTable("dvd","caphe-le") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập cà phê lẻ
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="dvd" asp-route-bang="caphe-si"
+                       class="ctx-menu__item @(IsTable("dvd","caphe-si") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập cà phê sỉ
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="dvd" asp-route-bang="tieu-le"
+                       class="ctx-menu__item @(IsTable("dvd","tieu-le") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập tiêu lẻ
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="dvd" asp-route-bang="tieu-si"
+                       class="ctx-menu__item @(IsTable("dvd","tieu-si") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập tiêu sỉ
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="dvd" asp-route-bang="xuat-caphe"
+                       class="ctx-menu__item @(IsTable("dvd","xuat-caphe") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất cà phê
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="dvd" asp-route-bang="xuat-tieu"
+                       class="ctx-menu__item @(IsTable("dvd","xuat-tieu") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất tiêu
+                    </a>
+
+                    <div class="ctx-menu__divider"></div>
+                    <div class="ctx-menu__section">Kho Thông Đào</div>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="thongdao" asp-route-bang="caphe"
+                       class="ctx-menu__item @(IsTable("thongdao","caphe") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập cà phê
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="thongdao" asp-route-bang="tieu"
+                       class="ctx-menu__item @(IsTable("thongdao","tieu") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập tiêu
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="thongdao" asp-route-bang="xuat-caphe"
+                       class="ctx-menu__item @(IsTable("thongdao","xuat-caphe") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất cà phê
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="thongdao" asp-route-bang="xuat-tieu"
+                       class="ctx-menu__item @(IsTable("thongdao","xuat-tieu") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất tiêu
+                    </a>
+
+                    <div class="ctx-menu__divider"></div>
+                    <div class="ctx-menu__section">Kho Ymoal</div>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="ymoal" asp-route-bang="caphe-le"
+                       class="ctx-menu__item @(IsTable("ymoal","caphe-le") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập cà phê lẻ
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="ymoal" asp-route-bang="caphe-si"
+                       class="ctx-menu__item @(IsTable("ymoal","caphe-si") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập cà phê sỉ
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="ymoal" asp-route-bang="tieu-le"
+                       class="ctx-menu__item @(IsTable("ymoal","tieu-le") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập tiêu lẻ
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="ymoal" asp-route-bang="tieu-si"
+                       class="ctx-menu__item @(IsTable("ymoal","tieu-si") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập tiêu sỉ
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="ymoal" asp-route-bang="xuat-caphe"
+                       class="ctx-menu__item @(IsTable("ymoal","xuat-caphe") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất cà phê
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="ymoal" asp-route-bang="xuat-tieu"
+                       class="ctx-menu__item @(IsTable("ymoal","xuat-tieu") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất tiêu
+                    </a>
+
+                    <div class="ctx-menu__divider"></div>
+                    <div class="ctx-menu__section">Kho Cư Jut</div>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="cujut" asp-route-bang="caphe"
+                       class="ctx-menu__item @(IsTable("cujut","caphe") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập cà phê
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="cujut" asp-route-bang="tieu"
+                       class="ctx-menu__item @(IsTable("cujut","tieu") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập tiêu
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="cujut" asp-route-bang="xuat-caphe"
+                       class="ctx-menu__item @(IsTable("cujut","xuat-caphe") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất cà phê
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="cujut" asp-route-bang="xuat-tieu"
+                       class="ctx-menu__item @(IsTable("cujut","xuat-tieu") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất tiêu
+                    </a>
+
+                    <div class="ctx-menu__divider"></div>
+                    <div class="ctx-menu__section">Kho Hòa Phú</div>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="hoaphu" asp-route-bang="caphe"
+                       class="ctx-menu__item @(IsTable("hoaphu","caphe") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập cà phê
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="hoaphu" asp-route-bang="tieu"
+                       class="ctx-menu__item @(IsTable("hoaphu","tieu") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/></svg>
+                        Nhập tiêu
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="hoaphu" asp-route-bang="xuat-caphe"
+                       class="ctx-menu__item @(IsTable("hoaphu","xuat-caphe") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất cà phê
+                    </a>
+                    <a asp-controller="Data" asp-action="Table" asp-route-kho="hoaphu" asp-route-bang="xuat-tieu"
+                       class="ctx-menu__item @(IsTable("hoaphu","xuat-tieu") ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/></svg>
+                        Xuất tiêu
+                    </a>
+                </div>
+
+                <div id="ctxOverlay" class="ctx-overlay" hidden></div>
+
+                <!-- ── PAGE CONTENT ──────────────────────────────────────── -->
+                <div class="cust-content">
+                    @RenderBody()
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer text-muted">
+        <div class="portal-container">&copy; 2026 - Nông sản Thanh Bình</div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    (function () {
+        var menu    = document.getElementById('ctxMenu');
+        var overlay = document.getElementById('ctxOverlay');
+        var shell   = document.getElementById('dataShell');
+
+        function showMenu(x, y) {
+            menu.style.left = Math.min(x, window.innerWidth  - menu.offsetWidth  - 8) + 'px';
+            menu.style.top  = Math.min(y, window.innerHeight - menu.offsetHeight - 8) + 'px';
+            menu.classList.add('is-open');
+            overlay.hidden = false;
+        }
+        function hideMenu() {
+            menu.classList.remove('is-open');
+            overlay.hidden = true;
+        }
+
+        shell.addEventListener('contextmenu', function (e) {
+            if (e.target.closest('a,button,input,select,textarea,th,td')) return;
+            e.preventDefault();
+            showMenu(e.clientX, e.clientY);
+        });
+        overlay.addEventListener('click', hideMenu);
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideMenu(); });
+    })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

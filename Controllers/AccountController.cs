@@ -64,6 +64,7 @@ public class AccountController : Controller
         }
 
         _loginAttemptService.Reset(clientKey);
+        await _companyUserService.UpdateLastLoginAsync(user.Username);
 
         var claims = new List<Claim>
         {

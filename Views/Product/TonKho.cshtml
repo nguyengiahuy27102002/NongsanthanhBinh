@@ -1,0 +1,115 @@
+@model DuongVanDung.WebApp.Models.Product.TonKhoViewModel
+@{
+    ViewData["Title"] = "Tồn kho";
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">Báo cáo sản phẩm</p>
+        <h1>Báo cáo tồn kho</h1>
+        <p class="cust-subtitle">Tổng hợp nhập – xuất – tồn theo kho và sản phẩm</p>
+    </div>
+</div>
+
+<!-- ── KPI tổng hệ thống ─────────────────────────────────────── -->
+<div class="prod-kpi-row">
+    <div class="prod-kpi prod-kpi--caphe">
+        <div class="prod-kpi__title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/>
+            </svg>
+            Cà phê — Toàn hệ thống
+        </div>
+        <div class="prod-kpi__stats">
+            <div class="prod-kpi__stat">
+                <span>Tổng nhập</span>
+                <strong>@Model.TongNhapCaPhe.ToString("#,0.##") kg</strong>
+            </div>
+            <div class="prod-kpi__stat">
+                <span>Tổng xuất</span>
+                <strong>@Model.TongXuatCaPhe.ToString("#,0.##") kg</strong>
+            </div>
+            <div class="prod-kpi__stat prod-kpi__stat--ton">
+                <span>Tồn kho</span>
+                <strong>@Model.TonCaPhe.ToString("#,0.##") kg</strong>
+            </div>
+        </div>
+    </div>
+    <div class="prod-kpi prod-kpi--tieu">
+        <div class="prod-kpi__title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/>
+                <path d="M7 20.662V19a2 2 0 012-2h6a2 2 0 012 2v1.662"/>
+            </svg>
+            Tiêu — Toàn hệ thống
+        </div>
+        <div class="prod-kpi__stats">
+            <div class="prod-kpi__stat">
+                <span>Tổng nhập</span>
+                <strong>@Model.TongNhapTieu.ToString("#,0.##") kg</strong>
+            </div>
+            <div class="prod-kpi__stat">
+                <span>Tổng xuất</span>
+                <strong>@Model.TongXuatTieu.ToString("#,0.##") kg</strong>
+            </div>
+            <div class="prod-kpi__stat prod-kpi__stat--ton">
+                <span>Tồn kho</span>
+                <strong>@Model.TonTieu.ToString("#,0.##") kg</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Bảng chi tiết theo kho ────────────────────────────────── -->
+<div class="cust-table-wrap">
+    <table class="cust-table">
+        <thead>
+            <tr>
+                <th>Kho</th>
+                <th>Sản phẩm</th>
+                <th style="text-align:right">Tổng nhập (kg)</th>
+                <th style="text-align:right">Tổng xuất (kg)</th>
+                <th style="text-align:right">Tồn kho (kg)</th>
+                <th style="text-align:center">Tỷ lệ xuất</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                var pct = r.TongNhap > 0 ? (double)(r.TongXuat / r.TongNhap * 100) : 0;
+                <tr class="cust-row">
+                    <td>
+                        <span class="kho-badge kho-badge--@KhoBadgeKey(r.Kho)">@r.Kho</span>
+                    </td>
+                    <td>
+                        <span class="sp-badge sp-badge--@(r.SanPham=="Cà phê"?"caphe":"tieu")">@r.SanPham</span>
+                    </td>
+                    <td style="text-align:right; font-weight:600; font-variant-numeric:tabular-nums">
+                        @r.TongNhap.ToString("#,0.##")
+                    </td>
+                    <td style="text-align:right; font-variant-numeric:tabular-nums; color:#dc2626">
+                        @r.TongXuat.ToString("#,0.##")
+                    </td>
+                    <td style="text-align:right; font-weight:800; font-variant-numeric:tabular-nums; color:@(r.TonKho > 0 ? "#16a34a" : "#dc2626")">
+                        @r.TonKho.ToString("#,0.##")
+                    </td>
+                    <td style="text-align:center">
+                        <div class="ton-progress-wrap">
+                            <div class="ton-progress-bar" style="width:@Math.Min(100,pct).ToString("0")%"></div>
+                            <span class="ton-pct">@pct.ToString("0.#")%</span>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    static string KhoBadgeKey(string kho) => kho switch {
+        "Dương Văn Dũng" => "dvd",
+        "Thông Đào"      => "thongdao",
+        "Ymoal"          => "ymoal",
+        _                => "other"
+    };
+}

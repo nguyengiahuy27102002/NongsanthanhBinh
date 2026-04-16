@@ -1,0 +1,273 @@
+@model DuongVanDung.WebApp.Models.Report.QualityReportViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Phân tích chất lượng";
+    var f = Model.Filter;
+    var ck = Model.CoffeeKpi;
+    var pk = Model.PepperKpi;
+    var jo = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+}
+
+<div class="rpt-shell">
+    <div class="rpt-header">
+        <div><p class="eyebrow">Báo cáo phân tích</p><h1>Chất lượng sản phẩm</h1></div>
+    </div>
+
+    <!-- ── FILTER ─────────────────────────────────────────────── -->
+    <form method="get" asp-action="Quality" class="rpt-filter-bar">
+        @{ var now = DuongVanDung.WebApp.Helpers.VietnamTime.Now; var td = now.ToString("yyyy-MM-dd"); var bq = !string.IsNullOrEmpty(f.Branch) ? $"&branch={f.Branch}" : ""; }
+        <div class="filter-quick-row" style="margin-bottom:.5rem">
+            <a href="?dateFrom=@now.AddDays(-7).ToString("yyyy-MM-dd")&dateTo=@td@bq" class="filter-quick">1 tuần</a>
+            <a href="?dateFrom=@now.AddMonths(-1).ToString("yyyy-MM-dd")&dateTo=@td@bq" class="filter-quick">1 tháng</a>
+            <a href="?dateFrom=@now.AddMonths(-3).ToString("yyyy-MM-dd")&dateTo=@td@bq" class="filter-quick">1 quý</a>
+            <a href="?dateFrom=@($"{now.Year}-01-01")&dateTo=@td@bq" class="filter-quick">Năm nay</a>
+        </div>
+        <div class="rpt-filter-row">
+            <div class="filter-group"><label>Từ ngày</label><input type="date" name="dateFrom" value="@f.DateFromStr" class="filter-input"/></div>
+            <div class="filter-group"><label>Đến ngày</label><input type="date" name="dateTo" value="@f.DateToStr" class="filter-input"/></div>
+            <div class="filter-group"><label>Chi nhánh</label>
+                <select name="branch" class="filter-select"><option value="">Tất cả</option>
+                    @foreach (var b in Model.AvailableBranches) { <option value="@b" selected="@(f.Branch == b ? "selected" : null)">@b</option> }
+                </select>
+            </div>
+            <button type="submit" class="filter-apply-btn">Áp dụng</button>
+        </div>
+    </form>
+
+    <!-- ══ KPI: CÀ PHÊ ═══════════════════════════════════════════ -->
+    @if (ck.TotalRecords > 0)
+    {
+        <h2 class="rpt-section-title rpt-section-title--coffee">☕ Cà phê</h2>
+        <div class="rpt-kpi-grid">
+            <div class="rpt-kpi rpt-kpi--blue"><span class="rpt-kpi__label">Tổng phiếu nhập</span><strong class="rpt-kpi__value">@ck.TotalRecords.ToString("#,0")</strong></div>
+            <div class="rpt-kpi rpt-kpi--green"><span class="rpt-kpi__label">Tổng trọng lượng</span><strong class="rpt-kpi__value">@ck.TotalVolume.ToString("#,0") <small>kg</small></strong></div>
+            <div class="rpt-kpi rpt-kpi--teal"><span class="rpt-kpi__label">Tổng quy chuẩn</span><strong class="rpt-kpi__value">@ck.TotalStandard.ToString("#,0") <small>kg</small></strong></div>
+            <div class="rpt-kpi rpt-kpi--amber"><span class="rpt-kpi__label">TB độ ẩm</span><strong class="rpt-kpi__value">@ck.AvgMoisture<small>%</small></strong></div>
+            <div class="rpt-kpi rpt-kpi--red"><span class="rpt-kpi__label">TB tạp chất</span><strong class="rpt-kpi__value">@ck.AvgImpurity<small>%</small></strong></div>
+            <div class="rpt-kpi rpt-kpi--gold"><span class="rpt-kpi__label">Tổng giá trị</span><strong class="rpt-kpi__value">@ck.TotalAmount.ToString("#,0") <small>đ</small></strong></div>
+            @if (ck.AlertCount > 0) { <div class="rpt-kpi rpt-kpi--danger"><span class="rpt-kpi__label">Cảnh báo</span><strong class="rpt-kpi__value">@ck.AlertCount</strong></div> }
+        </div>
+    }
+
+    <!-- ══ KPI: TIÊU ═════════════════════════════════════════════ -->
+    @if (pk.TotalRecords > 0)
+    {
+        <h2 class="rpt-section-title rpt-section-title--pepper">🫙 Tiêu</h2>
+        <div class="rpt-kpi-grid">
+            <div class="rpt-kpi rpt-kpi--blue"><span class="rpt-kpi__label">Tổng phiếu nhập</span><strong class="rpt-kpi__value">@pk.TotalRecords.ToString("#,0")</strong></div>
+            <div class="rpt-kpi rpt-kpi--green"><span class="rpt-kpi__label">Tổng trọng lượng</span><strong class="rpt-kpi__value">@pk.TotalVolume.ToString("#,0") <small>kg</small></strong></div>
+            <div class="rpt-kpi rpt-kpi--teal"><span class="rpt-kpi__label">Tổng quy chuẩn</span><strong class="rpt-kpi__value">@pk.TotalStandard.ToString("#,0") <small>kg</small></strong></div>
+            <div class="rpt-kpi rpt-kpi--amber"><span class="rpt-kpi__label">TB độ ẩm</span><strong class="rpt-kpi__value">@pk.AvgMoisture<small>%</small></strong></div>
+            <div class="rpt-kpi rpt-kpi--red"><span class="rpt-kpi__label">TB tạp chất</span><strong class="rpt-kpi__value">@pk.AvgImpurity<small>%</small></strong></div>
+            @if (pk.AvgDem.HasValue) { <div class="rpt-kpi rpt-kpi--purple"><span class="rpt-kpi__label">TB Đếm</span><strong class="rpt-kpi__value">@pk.AvgDem.Value</strong></div> }
+            <div class="rpt-kpi rpt-kpi--gold"><span class="rpt-kpi__label">Tổng giá trị</span><strong class="rpt-kpi__value">@pk.TotalAmount.ToString("#,0") <small>đ</small></strong></div>
+            @if (pk.AlertCount > 0) { <div class="rpt-kpi rpt-kpi--danger"><span class="rpt-kpi__label">Cảnh báo</span><strong class="rpt-kpi__value">@pk.AlertCount</strong></div> }
+        </div>
+    }
+
+    @if (ck.TotalRecords == 0 && pk.TotalRecords == 0)
+    {
+        <div class="rpt-empty"><h3>Không có dữ liệu</h3><p>Hãy thay đổi bộ lọc.</p></div>
+    }
+    else
+    {
+        <!-- ══ 1: TỔNG SỐ LƯỢNG NHẬP THEO CHI NHÁNH ════════════ -->
+        @if (Model.BranchComparison.Count > 0)
+        {
+            <section class="rpt-card rpt-card--wide">
+                <div class="rpt-card__header"><h2>Tổng số lượng nhập theo chi nhánh</h2></div>
+                <div class="rpt-card__body"><canvas id="chartBranch" height="300"></canvas></div>
+                <div class="rpt-card__body rpt-card__body--table" style="border-top:1px solid #f1f5f9">
+                    <table class="rpt-table"><thead><tr><th>#</th><th>Chi nhánh</th><th style="text-align:right">Cà phê (kg)</th><th style="text-align:right">Tiêu (kg)</th><th style="text-align:right">Tổng (kg)</th><th style="text-align:right">Điểm CL</th></tr></thead>
+                    <tbody>
+                        @foreach (var (b, i) in Model.BranchComparison.Select((x, i) => (x, i)))
+                        { <tr><td><span class="rank-badge rank-badge--@(i < 3 ? "top" : "normal")">@(i+1)</span></td><td><strong>@b.Branch</strong></td><td style="text-align:right">@b.CoffeeVolume.ToString("#,0")</td><td style="text-align:right">@b.PepperVolume.ToString("#,0")</td><td style="text-align:right;font-weight:700">@b.TotalVolume.ToString("#,0")</td><td style="text-align:right"><span class="score-pill score-pill--@(b.QualityScore>=70?"good":b.QualityScore>=50?"ok":"bad")">@b.QualityScore</span></td></tr> }
+                    </tbody></table>
+                </div>
+            </section>
+        }
+
+        <!-- ══ 2: XU HƯỚNG THEO THÁNG + YoY ═════════════════════ -->
+        <div class="rpt-grid-2">
+            @if (Model.Trends.Count > 0)
+            {
+                <section class="rpt-card">
+                    <div class="rpt-card__header"><h2>Xu hướng chất lượng theo tháng (12 tháng)</h2></div>
+                    <div class="rpt-card__body"><canvas id="chartTrend" height="300"></canvas></div>
+                </section>
+            }
+            <section class="rpt-card">
+                <div class="rpt-card__header"><h2>So sánh với cùng kỳ năm ngoái</h2></div>
+                <div class="rpt-card__body">
+                    @if (Model.YoY.HasLastYear)
+                    {
+                        @if (Model.YoY.CoffeeRows.Count > 0)
+                        {
+                            <h3 style="font-size:.85rem;font-weight:700;color:#92400e;margin:0 0 .5rem">☕ Cà phê</h3>
+                            <table class="rpt-table" style="margin-bottom:1.25rem"><thead><tr><th>Chỉ số</th><th style="text-align:right">Hiện tại</th><th style="text-align:right">Năm ngoái</th><th style="text-align:right">Chênh lệch</th></tr></thead>
+                            <tbody>@foreach (var r in Model.YoY.CoffeeRows) { <tr><td><strong>@r.Metric</strong></td><td style="text-align:right">@r.CurrentValue</td><td style="text-align:right">@(r.LastYearValue != 0 ? r.LastYearValue.ToString() : "—")</td><td style="text-align:right" class="@(r.Delta < -0.2m ? "delta--good" : r.Delta > 0.2m ? "delta--bad" : "")">@(r.LastYearValue != 0 ? $"{(r.Delta >= 0 ? "+" : "")}{r.Delta}" : "—")</td></tr> }</tbody></table>
+                        }
+                        @if (Model.YoY.PepperRows.Count > 0)
+                        {
+                            <h3 style="font-size:.85rem;font-weight:700;color:#166534;margin:0 0 .5rem">🫙 Tiêu</h3>
+                            <table class="rpt-table"><thead><tr><th>Chỉ số</th><th style="text-align:right">Hiện tại</th><th style="text-align:right">Năm ngoái</th><th style="text-align:right">Chênh lệch</th></tr></thead>
+                            <tbody>@foreach (var r in Model.YoY.PepperRows) { var isDem = r.Metric.Contains("DEM"); <tr><td><strong>@r.Metric</strong></td><td style="text-align:right">@r.CurrentValue</td><td style="text-align:right">@(r.LastYearValue != 0 ? r.LastYearValue.ToString() : "—")</td><td style="text-align:right" class="@(isDem ? (r.Delta > 10 ? "delta--good" : r.Delta < -10 ? "delta--bad" : "") : (r.Delta < -0.2m ? "delta--good" : r.Delta > 0.2m ? "delta--bad" : ""))">@(r.LastYearValue != 0 ? $"{(r.Delta >= 0 ? "+" : "")}{r.Delta}" : "—")</td></tr> }</tbody></table>
+                        }
+                    }
+                    else { <p style="color:#94a3b8;text-align:center;padding:2rem 0">Không có dữ liệu năm ngoái</p> }
+                </div>
+            </section>
+        </div>
+
+        <!-- ══ 3: TOP 10 NHÀ CUNG CẤP ═══════════════════════════ -->
+        <div class="rpt-grid-2">
+            @if (Model.TopCoffeeSuppliers.Count > 0)
+            {
+                <section class="rpt-card">
+                    <div class="rpt-card__header"><h2>Top 10 nhà cung cấp cà phê tốt nhất</h2><span class="rpt-card__badge" style="background:#fef3e2;color:#92400e">☕</span></div>
+                    <div class="rpt-card__body rpt-card__body--table">
+                        <table class="rpt-table"><thead><tr><th>#</th><th>Nhà cung cấp</th><th>Kho</th><th style="text-align:right">Điểm</th><th style="text-align:right">Ẩm%</th><th style="text-align:right">Tạp%</th><th style="text-align:right">KL (kg)</th><th style="text-align:right">Tiền (đ)</th><th style="text-align:right">GD</th></tr></thead>
+                        <tbody>@foreach (var (s, i) in Model.TopCoffeeSuppliers.Select((x, i) => (x, i))) { <tr><td><span class="rank-badge rank-badge--top">@(i+1)</span></td><td><strong>@s.Name</strong></td><td>@s.Branch</td><td style="text-align:right"><span class="score-pill score-pill--good">@s.QualityScore</span></td><td style="text-align:right">@s.AvgMoisture</td><td style="text-align:right">@s.AvgImpurity</td><td style="text-align:right">@s.TotalVolume.ToString("#,0")</td><td style="text-align:right">@s.TotalAmount.ToString("#,0")</td><td style="text-align:right">@s.Transactions</td></tr> }</tbody></table>
+                    </div>
+                </section>
+            }
+            @if (Model.TopPepperSuppliers.Count > 0)
+            {
+                <section class="rpt-card">
+                    <div class="rpt-card__header"><h2>Top 10 nhà cung cấp tiêu tốt nhất</h2><span class="rpt-card__badge" style="background:#dcfce7;color:#166534">🫙</span></div>
+                    <div class="rpt-card__body rpt-card__body--table">
+                        <table class="rpt-table"><thead><tr><th>#</th><th>Nhà cung cấp</th><th>Kho</th><th style="text-align:right">Điểm</th><th style="text-align:right">Ẩm%</th><th style="text-align:right">Tạp%</th><th style="text-align:right">DEM</th><th style="text-align:right">KL (kg)</th><th style="text-align:right">Tiền (đ)</th><th style="text-align:right">GD</th></tr></thead>
+                        <tbody>@foreach (var (s, i) in Model.TopPepperSuppliers.Select((x, i) => (x, i))) { <tr><td><span class="rank-badge rank-badge--top">@(i+1)</span></td><td><strong>@s.Name</strong></td><td>@s.Branch</td><td style="text-align:right"><span class="score-pill score-pill--good">@s.QualityScore</span></td><td style="text-align:right">@s.AvgMoisture</td><td style="text-align:right">@s.AvgImpurity</td><td style="text-align:right">@(s.AvgDem?.ToString("#,0") ?? "—")</td><td style="text-align:right">@s.TotalVolume.ToString("#,0")</td><td style="text-align:right">@s.TotalAmount.ToString("#,0")</td><td style="text-align:right">@s.Transactions</td></tr> }</tbody></table>
+                    </div>
+                </section>
+            }
+        </div>
+
+        <!-- ══ 4: PHÂN BỐ ════════════════════════════════════════ -->
+        <div class="rpt-grid-2">
+            <section class="rpt-card"><div class="rpt-card__header"><h2>Phân bố độ ẩm</h2></div><div class="rpt-card__body"><canvas id="chartMDist" height="240"></canvas></div></section>
+            <section class="rpt-card"><div class="rpt-card__header"><h2>Phân bố tạp chất</h2></div><div class="rpt-card__body"><canvas id="chartIDist" height="240"></canvas></div></section>
+        </div>
+
+        <!-- ══ 5: CẢNH BÁO ═══════════════════════════════════════ -->
+        @if (Model.Alerts.Count > 0)
+        {
+            <section class="rpt-card rpt-card--wide">
+                <div class="rpt-card__header"><h2>Cảnh báo chất lượng</h2><span class="rpt-card__badge rpt-card__badge--red">@Model.Alerts.Count</span></div>
+                <div class="rpt-card__body rpt-card__body--table"><div style="overflow-x:auto">
+                    <table class="rpt-table"><thead><tr><th>Mức</th><th>Nhập/Xuất</th><th>SP</th><th>Mã phiếu</th><th>Loại</th><th>Chi nhánh</th><th>Khách / Tài xế</th><th>Ngày</th><th style="text-align:right">Giá trị</th><th>Nội dung</th></tr></thead>
+                    <tbody>@foreach (var a in Model.Alerts) { <tr class="alert-row alert-row--@a.Severity"><td>@if (a.Severity=="danger"){<span class="alert-badge alert-badge--danger">Nguy</span>}else{<span class="alert-badge alert-badge--warning">Chú ý</span>}</td><td>@(a.IsExport?"Xuất":"Nhập")</td><td>@a.Product</td><td><strong>#@a.OrderId</strong></td><td>@(a.Type=="moisture"?"Độ ẩm":a.Type=="impurity"?"Tạp chất":"DEM")</td><td>@a.Branch</td><td>@a.Supplier</td><td style="white-space:nowrap">@a.Date.ToString("dd/MM/yyyy")</td><td style="text-align:right"><strong>@a.Value</strong></td><td>@a.Message</td></tr> }</tbody></table>
+                </div></div>
+            </section>
+        }
+
+        <!-- ══ 6: XUẤT vs NHẬP FIFO + PROFIT SUMMARY ════════════ -->
+        @if (Model.ExportComparisons.Count > 0)
+        {
+            <section class="rpt-card rpt-card--wide">
+                <div class="rpt-card__header"><h2>So sánh chất lượng Xuất vs Nhập (FIFO)</h2><span class="rpt-card__badge rpt-card__badge--purple">@Model.ExportComparisons.Count lần xuất</span></div>
+
+                <!-- Profit summary -->
+                @if (Model.FifoSummary != null)
+                {
+                    var s = Model.FifoSummary;
+                    <div class="rpt-card__body" style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
+                        <h3 style="font-size:.9rem;font-weight:700;margin:0 0 .75rem">Tổng hợp lợi / thiệt từ tính chất</h3>
+                        <div class="rpt-kpi-grid" style="margin:0">
+                            <div class="rpt-kpi rpt-kpi--blue"><span class="rpt-kpi__label">Tổng lần xuất</span><strong class="rpt-kpi__value">@s.TotalExports</strong></div>
+                            <div class="rpt-kpi rpt-kpi--green"><span class="rpt-kpi__label">Tổng KL xuất</span><strong class="rpt-kpi__value">@s.TotalExportKg.ToString("#,0") <small>kg</small></strong></div>
+                            <div class="rpt-kpi @(s.AvgMoistureDelta <= 0 ? "rpt-kpi--teal" : "rpt-kpi--danger")">
+                                <span class="rpt-kpi__label">TB Δ Độ ẩm</span>
+                                <strong class="rpt-kpi__value">@(s.AvgMoistureDelta >= 0 ? "+" : "")@s.AvgMoistureDelta<small>%</small></strong>
+                            </div>
+                            <div class="rpt-kpi @(s.AvgImpurityDelta <= 0 ? "rpt-kpi--teal" : "rpt-kpi--danger")">
+                                <span class="rpt-kpi__label">TB Δ Tạp chất</span>
+                                <strong class="rpt-kpi__value">@(s.AvgImpurityDelta >= 0 ? "+" : "")@s.AvgImpurityDelta<small>%</small></strong>
+                            </div>
+                            @if (s.AvgDemDelta.HasValue)
+                            {
+                                <div class="rpt-kpi @(s.AvgDemDelta >= 0 ? "rpt-kpi--teal" : "rpt-kpi--danger")">
+                                    <span class="rpt-kpi__label">TB Δ DEM</span>
+                                    <strong class="rpt-kpi__value">@(s.AvgDemDelta >= 0 ? "+" : "")@s.AvgDemDelta</strong>
+                                </div>
+                            }
+                            <div class="rpt-kpi rpt-kpi--green"><span class="rpt-kpi__label">Lần xuất có lợi</span><strong class="rpt-kpi__value">@s.ProfitableCount <small>/ @s.TotalExports</small></strong></div>
+                            <div class="rpt-kpi rpt-kpi--red"><span class="rpt-kpi__label">Lần xuất bất lợi</span><strong class="rpt-kpi__value">@s.LossCount <small>/ @s.TotalExports</small></strong></div>
+                        </div>
+                        <p style="font-size:.78rem;color:#64748b;margin:.75rem 0 0">Δ âm = xuất tốt hơn nhập (công ty lợi). Δ dương = xuất kém hơn nhập (bất lợi). DEM: Δ dương = lợi.</p>
+                    </div>
+                }
+
+                <div class="rpt-card__body rpt-card__body--table"><div style="overflow-x:auto">
+                    <table class="rpt-table" style="min-width:1100px" id="fifoTable">
+                        <thead>
+                            <tr>
+                                <th rowspan="2"></th><th rowspan="2">Ngày</th><th rowspan="2">Kho</th><th rowspan="2">SP</th><th rowspan="2">Điểm xuất</th><th rowspan="2" style="text-align:right">KL (kg)</th>
+                                <th colspan="3" style="text-align:center;background:#f0f4ff;border-bottom:1px solid #e2e8f0">Xuất</th>
+                                <th colspan="3" style="text-align:center;background:#f0fdf4;border-bottom:1px solid #e2e8f0">TB Nhập tương ứng</th>
+                                <th colspan="2" style="text-align:center;background:#fef3c7;border-bottom:1px solid #e2e8f0">Chênh lệch</th>
+                            </tr>
+                            <tr><th style="text-align:right;font-size:.68rem">Ẩm%</th><th style="text-align:right;font-size:.68rem">Tạp%</th><th style="text-align:right;font-size:.68rem">DEM</th><th style="text-align:right;font-size:.68rem">Ẩm%</th><th style="text-align:right;font-size:.68rem">Tạp%</th><th style="text-align:right;font-size:.68rem">DEM</th><th style="text-align:right;font-size:.68rem">Δ Ẩm</th><th style="text-align:right;font-size:.68rem">Δ Tạp</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var (c, idx) in Model.ExportComparisons.Select((x, i) => (x, i)))
+                            {
+                                var mD=c.MoistureDelta; var iD=c.ImpurityDelta;
+                                var mC=mD<-0.3m?"delta--good":mD>0.3m?"delta--bad":"";
+                                var iC=iD<-0.1m?"delta--good":iD>0.1m?"delta--bad":"";
+                                <tr class="fifo-parent" onclick="toggleFifo(@idx)" style="cursor:pointer">
+                                    <td><span class="fifo-toggle" id="tog_@idx">▶</span></td>
+                                    <td style="white-space:nowrap">@c.ExportDate.ToString("dd/MM/yy")</td><td><strong>@c.Branch</strong></td><td>@c.Product</td>
+                                    <td>@(string.IsNullOrEmpty(c.Destination)||c.Destination=="0"?"—":c.Destination)</td>
+                                    <td style="text-align:right;font-weight:700">@c.ExportWeight.ToString("#,0")</td>
+                                    <td style="text-align:right;background:#f8faff">@c.ExportMoisture</td><td style="text-align:right;background:#f8faff">@c.ExportImpurity</td><td style="text-align:right;background:#f8faff">@(c.ExportDem.HasValue&&c.ExportDem>0?c.ExportDem.Value.ToString("#,0"):"—")</td>
+                                    <td style="text-align:right;background:#f8fdf8">@c.ImportAvgMoisture</td><td style="text-align:right;background:#f8fdf8">@c.ImportAvgImpurity</td><td style="text-align:right;background:#f8fdf8">@(c.ImportAvgDem.HasValue?c.ImportAvgDem.Value.ToString("#,0"):"—")</td>
+                                    <td style="text-align:right" class="@mC">@(mD>=0?"+":"")@mD</td><td style="text-align:right" class="@iC">@(iD>=0?"+":"")@iD</td>
+                                </tr>
+                                <tr class="fifo-detail" id="detail_@idx" style="display:none">
+                                    <td colspan="14" style="padding:0;background:#f8fafc"><div style="padding:.75rem 1.25rem .75rem 2.5rem">
+                                        <p style="font-size:.78rem;font-weight:700;color:#475569;margin:0 0 .5rem">@c.ImportMatchedCount phiếu nhập — @c.ImportMatchedWeight.ToString("#,0") kg</p>
+                                        <table class="rpt-table" style="font-size:.78rem;margin:0"><thead><tr><th>Ngày</th><th>Khách hàng</th><th>#</th><th style="text-align:right">KL gốc</th><th style="text-align:right">KL match</th><th style="text-align:right">Ẩm%</th><th style="text-align:right">Tạp%</th>@if(c.ExportDem.HasValue){<th style="text-align:right">DEM</th>}</tr></thead>
+                                        <tbody>@foreach(var m in c.MatchedImports){<tr><td style="white-space:nowrap">@m.Date.ToString("dd/MM/yyyy")</td><td><strong>@m.Supplier</strong></td><td>#@m.OrderId</td><td style="text-align:right">@m.TotalWeight.ToString("#,0")</td><td style="text-align:right;font-weight:600">@m.MatchedWeight.ToString("#,0")</td><td style="text-align:right">@m.Moisture</td><td style="text-align:right">@m.Impurity</td>@if(c.ExportDem.HasValue){<td style="text-align:right">@(m.Dem.HasValue&&m.Dem>0?m.Dem.Value.ToString("#,0"):"—")</td>}</tr>}</tbody></table>
+                                    </div></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div></div>
+            </section>
+        }
+    }
+</div>
+
+@section Scripts {
+<script>
+function toggleFifo(i){var r=document.getElementById('detail_'+i),t=document.getElementById('tog_'+i);if(r.style.display==='none'){r.style.display='';t.textContent='▼'}else{r.style.display='none';t.textContent='▶'}}
+(function(){
+    var C={blue:'rgba(37,99,235,.85)',red:'rgba(220,38,38,.85)',green:'rgba(22,163,74,.85)',amber:'rgba(217,119,6,.85)',purple:'rgba(124,58,237,.85)',coffee:'rgba(146,64,14,.75)',pepper:'rgba(22,101,52,.75)',blueBg:'rgba(37,99,235,.15)',redBg:'rgba(220,38,38,.15)',greenBg:'rgba(22,163,74,.15)',amberBg:'rgba(217,119,6,.15)'};
+    var opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:12},padding:16}}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(0,0,0,.05)'},beginAtZero:true}}};
+
+    @if(Model.BranchComparison.Count>0){var bl=Model.BranchComparison.Select(b=>b.Branch);var bc=Model.BranchComparison.Select(b=>b.CoffeeVolume);var bp=Model.BranchComparison.Select(b=>b.PepperVolume);
+        @:new Chart(document.getElementById('chartBranch'),{type:'bar',data:{labels:@Html.Raw(JsonSerializer.Serialize(bl,jo)),datasets:[{label:'Cà phê (kg)',data:@Html.Raw(JsonSerializer.Serialize(bc,jo)),backgroundColor:C.coffee,borderRadius:6},{label:'Tiêu (kg)',data:@Html.Raw(JsonSerializer.Serialize(bp,jo)),backgroundColor:C.pepper,borderRadius:6}]},options:{...opts,scales:{...opts.scales,x:{...opts.scales.x,stacked:true},y:{...opts.scales.y,stacked:true}}}});
+    }
+
+    @if(Model.Trends.Count>0){var tl=Model.Trends.Select(t=>t.Label);var cm=Model.Trends.Select(t=>t.CoffeeMoisture);var ci=Model.Trends.Select(t=>t.CoffeeImpurity);var pm=Model.Trends.Select(t=>t.PepperMoisture);var pi=Model.Trends.Select(t=>t.PepperImpurity);
+        @:new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:@Html.Raw(JsonSerializer.Serialize(tl,jo)),datasets:[
+        @:{label:'Cà phê - Ẩm%',data:@Html.Raw(JsonSerializer.Serialize(cm,jo)),borderColor:C.coffee,backgroundColor:'rgba(146,64,14,.1)',tension:.35,fill:false,pointRadius:3},
+        @:{label:'Cà phê - Tạp%',data:@Html.Raw(JsonSerializer.Serialize(ci,jo)),borderColor:C.amber,borderDash:[5,3],tension:.35,fill:false,pointRadius:2},
+        @:{label:'Tiêu - Ẩm%',data:@Html.Raw(JsonSerializer.Serialize(pm,jo)),borderColor:C.pepper,backgroundColor:'rgba(22,101,52,.1)',tension:.35,fill:false,pointRadius:3},
+        @:{label:'Tiêu - Tạp%',data:@Html.Raw(JsonSerializer.Serialize(pi,jo)),borderColor:C.green,borderDash:[5,3],tension:.35,fill:false,pointRadius:2}
+        @:]},options:opts});
+    }
+
+    @if(Model.MoistureDistribution.Count>0)
+    {
+        @:new Chart(document.getElementById('chartMDist'),{type:'bar',data:{labels:@Html.Raw(JsonSerializer.Serialize(Model.MoistureDistribution.Select(b=>b.Label),jo)),datasets:[{label:'Số phiếu',data:@Html.Raw(JsonSerializer.Serialize(Model.MoistureDistribution.Select(b=>b.Count),jo)),backgroundColor:C.blue,borderRadius:6}]},options:{...opts,plugins:{...opts.plugins,legend:{display:false}}}});
+    }
+    @if(Model.ImpurityDistribution.Count>0)
+    {
+        @:new Chart(document.getElementById('chartIDist'),{type:'bar',data:{labels:@Html.Raw(JsonSerializer.Serialize(Model.ImpurityDistribution.Select(b=>b.Label),jo)),datasets:[{label:'Số phiếu',data:@Html.Raw(JsonSerializer.Serialize(Model.ImpurityDistribution.Select(b=>b.Count),jo)),backgroundColor:C.red,borderRadius:6}]},options:{...opts,plugins:{...opts.plugins,legend:{display:false}}}});
+    }
+})();
+</script>
+}

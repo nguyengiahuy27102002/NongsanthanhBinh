@@ -1,0 +1,197 @@
+@model DuongVanDung.WebApp.Models.Customer.CustomerListViewModel
+@{
+    ViewData["Title"] = "Danh sách khách hàng";
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">Quản lý khách hàng</p>
+        <h1>Danh sách khách hàng</h1>
+        <p class="cust-subtitle">Click chuột phải vào vùng trống để mở menu điều hướng</p>
+    </div>
+    <div class="cust-stats-row">
+        <div class="cust-stat-pill cust-stat-pill--blue">
+            <strong>@Model.Total.ToString("#,0")</strong>
+            <span>Tổng khách hàng</span>
+        </div>
+        <a href="/Customer/ExportCustomers?search=@Model.Search" class="btn-excel" style="margin-right:.5rem">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            Xuất Excel
+        </a>
+        <a asp-action="Duplicates" class="cust-dup-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="7" r="4"/><circle cx="15" cy="7" r="4"/>
+                <path d="M2 21v-2a4 4 0 014-4h4M14 15h6M17 12v6"/>
+            </svg>
+            Tìm trùng
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert-success">@msg</div>
+}
+
+<!-- Toolbar: search -->
+<div class="cust-toolbar">
+    <form method="get" asp-action="Index" class="cust-search-form">
+        <div class="cust-search-wrap">
+            <svg class="cust-search-icon" viewBox="0 0 24 24" fill="none" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" name="search" value="@Model.Search"
+                   placeholder="Tìm theo tên, SĐT, CCCD, địa chỉ..."
+                   class="cust-search-input" />
+            <button type="submit" class="cust-search-btn">Tìm</button>
+            @if (!string.IsNullOrEmpty(Model.Search))
+            {
+                <a asp-action="Index" class="cust-clear-btn" title="Xóa tìm kiếm">✕</a>
+            }
+        </div>
+    </form>
+    <span class="cust-record-count">@Model.Total.ToString("#,0") bản ghi</span>
+</div>
+
+<!-- Bảng khách hàng -->
+<div class="cust-table-wrap">
+    <table class="cust-table" id="tblKhachHang">
+        <thead>
+            <tr>
+                <th class="col-stt">STT</th>
+                <th class="col-name">Tên khách hàng</th>
+                <th class="col-gender">Giới tính</th>
+                <th class="col-dob">Ngày sinh</th>
+                <th class="col-sdt">Số điện thoại</th>
+                <th class="col-cccd">Số CCCD</th>
+                <th class="col-diachi">Địa chỉ</th>
+                <th class="col-phieu" style="text-align:right">Phiếu</th>
+                <th class="col-tongtien" style="text-align:right">Tổng tiền</th>
+                <th class="col-action"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var startStt = (Model.Page - 1) * Model.PageSize + 1;
+            }
+            @foreach (var (k, idx) in Model.Customers.Select((x, i) => (x, i)))
+            {
+                var tongPhieu = k.SoPhieuCaPhe + k.SoPhieuTieu;
+                var tongTien  = k.TongChiCaPhe + k.TongChiTieu;
+                <tr class="cust-row">
+                    <td class="col-stt">
+                        <span class="stt-num">@(startStt + idx)</span>
+                    </td>
+                    <td class="col-name">
+                        <div class="cust-name-cell">
+                            <div class="cust-avatar" style="--av-color:@AvatarColor(k.CustomerID)">
+                                @FirstLetter(k.TenKhachHang)
+                            </div>
+                            <div class="cust-name-info">
+                                <strong>@k.TenKhachHang</strong>
+                                @if (!string.IsNullOrEmpty(k.GhiChu))
+                                {
+                                    <small class="cust-note" title="@k.GhiChu">@k.GhiChu</small>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td class="col-gender">
+                        @if (!string.IsNullOrEmpty(k.GioiTinh))
+                        {
+                            <span class="gender-badge gender-badge--@k.GioiTinh.ToLower().Replace("ữ","u")">@k.GioiTinh</span>
+                        }
+                        else { <span class="text-muted-sm">—</span> }
+                    </td>
+                    <td class="col-dob">
+                        @if (k.NgaySinh.HasValue)
+                        { <span>@k.NgaySinh.Value.ToString("dd/MM/yyyy")</span> }
+                        else { <span class="text-muted-sm">—</span> }
+                    </td>
+                    <td class="col-sdt">
+                        @if (!string.IsNullOrEmpty(k.SDT))
+                        { <a href="tel:@k.SDT" class="sdt-link">@k.SDT</a> }
+                        else { <span class="text-muted-sm">—</span> }
+                    </td>
+                    <td class="col-cccd">
+                        <span class="cccd-val">@(string.IsNullOrEmpty(k.CCCD) ? "—" : k.CCCD)</span>
+                    </td>
+                    <td class="col-diachi">
+                        <span class="diachi-text" title="@k.DiaChi">@(string.IsNullOrEmpty(k.DiaChi) ? "—" : k.DiaChi)</span>
+                    </td>
+                    <td class="col-phieu" style="text-align:right">
+                        @if (tongPhieu > 0)
+                        {
+                            <span class="badge-phieu">@tongPhieu</span>
+                        }
+                        else { <span class="text-muted-sm">—</span> }
+                    </td>
+                    <td class="col-tongtien" style="text-align:right">
+                        @if (tongTien > 0)
+                        {
+                            <span class="tien-val">@tongTien.ToString("#,0")</span>
+                        }
+                        else { <span class="text-muted-sm">—</span> }
+                    </td>
+                    <td class="col-action">
+                        <a asp-action="Detail" asp-route-id="@k.CustomerID" class="btn-detail">Chi tiết</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (Model.Customers.Count == 0)
+    {
+        <div class="table-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z"/>
+            </svg>
+            <p>Không tìm thấy khách hàng phù hợp</p>
+        </div>
+    }
+</div>
+
+<!-- Phân trang -->
+@if (Model.TotalPages > 1)
+{
+    <div class="cust-pagination">
+        @if (Model.Page > 1)
+        {
+            <a asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)" class="page-btn page-btn--nav">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+        }
+        @for (var p = Math.Max(1, Model.Page - 3); p <= Math.Min(Model.TotalPages, Model.Page + 3); p++)
+        {
+            <a asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@p"
+               class="page-btn @(p == Model.Page ? "is-active" : "")">@p</a>
+        }
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)" class="page-btn page-btn--nav">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+        }
+        <span class="page-info">Trang @Model.Page / @Model.TotalPages</span>
+    </div>
+}
+
+@functions {
+    static string AvatarColor(int id) => (id % 8) switch {
+        0 => "#2563eb", 1 => "#7c3aed", 2 => "#0891b2", 3 => "#16a34a",
+        4 => "#d97706", 5 => "#dc2626", 6 => "#db2777", _ => "#64748b"
+    };
+
+    static string FirstLetter(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts[^1].Substring(0, 1).ToUpper();
+    }
+}

@@ -107,17 +107,15 @@ public sealed class ProductPriceCard
 
 public sealed class DashboardChartSection
 {
-    public IReadOnlyCollection<string> InboundLabels { get; set; } = Array.Empty<string>();
+    public IReadOnlyCollection<DashboardChartPoint> CoffeeShare { get; set; } = Array.Empty<DashboardChartPoint>();
 
-    public IReadOnlyCollection<DashboardChartSeries> InboundSeries { get; set; } = Array.Empty<DashboardChartSeries>();
+    public IReadOnlyCollection<DashboardChartPoint> PepperShare { get; set; } = Array.Empty<DashboardChartPoint>();
 
-    public IReadOnlyCollection<DashboardChartPoint> InventoryShare { get; set; } = Array.Empty<DashboardChartPoint>();
+    public IReadOnlyCollection<string> DailyLabels { get; set; } = Array.Empty<string>();
 
-    public IReadOnlyCollection<string> WarehouseLabels { get; set; } = Array.Empty<string>();
+    public IReadOnlyCollection<DashboardChartSeries> CoffeeDailySeries { get; set; } = Array.Empty<DashboardChartSeries>();
 
-    public IReadOnlyCollection<DashboardChartSeries> StandardSeries { get; set; } = Array.Empty<DashboardChartSeries>();
-
-    public IReadOnlyCollection<DashboardChartSeries> FinanceSeries { get; set; } = Array.Empty<DashboardChartSeries>();
+    public IReadOnlyCollection<DashboardChartSeries> PepperDailySeries { get; set; } = Array.Empty<DashboardChartSeries>();
 }
 
 public sealed class DashboardChartSeries

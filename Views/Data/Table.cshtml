@@ -1,0 +1,321 @@
+@model DuongVanDung.WebApp.Models.Data.DataTableViewModel
+@{
+    ViewData["Title"] = $"{Model.KhoDisplay} — {Model.BangDisplay}";
+    var f = Model.Filter;
+
+    string ExportUrl()
+    {
+        var qs = $"?kho={f.Kho}&bang={f.Bang}";
+        if (f.DateFrom.HasValue) qs += $"&dateFrom={f.DateFromStr}";
+        if (f.DateTo.HasValue)   qs += $"&dateTo={f.DateToStr}";
+        if (f.MinAmount.HasValue && f.MinAmount > 0) qs += $"&minAmount={f.MinAmount}";
+        return "/Data/ExportExcel" + qs;
+    }
+
+    // Label tùy loại bảng
+    var dateLabel = Model.IsXuat ? "Ngày xuất" : "Ngày nhập";
+    var nameLabel = Model.IsXuat ? "Tên tài xế" : "Tên khách hàng";
+    var addrLabel = Model.IsXuat ? "Điểm xuất hàng" : "Địa chỉ";
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">
+            <a asp-action="Index" class="breadcrumb-link">Dữ liệu</a>
+            <span class="breadcrumb-sep">›</span>
+            @Model.KhoDisplay
+            <span class="breadcrumb-sep">›</span>
+            @Model.BangDisplay
+        </p>
+        <h1>@Model.BangDisplay</h1>
+        <p class="cust-subtitle">@Model.KhoDisplay · Click chuột phải để chuyển bảng</p>
+    </div>
+    <a href="@ExportUrl()" class="btn-excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+        </svg>
+        Xuất Excel
+    </a>
+</div>
+
+@if (!Model.TableExists)
+{
+    <div class="data-no-table">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <h3>Bảng chưa được cấu hình</h3>
+        <p>Bảng <strong>@Model.BangDisplay</strong> của kho <strong>@Model.KhoDisplay</strong> chưa tồn tại trong cơ sở dữ liệu.</p>
+        <a asp-action="Index" class="btn-back" style="display:inline-flex;margin-top:1rem">Quay lại tổng quan</a>
+    </div>
+}
+else
+{
+    <!-- ── Filter bar ───────────────────────────────────────────────────── -->
+    <form method="get" asp-action="Table" class="data-filter-bar">
+        <input type="hidden" name="kho"  value="@f.Kho" />
+        <input type="hidden" name="bang" value="@f.Bang" />
+
+        <div class="filter-quick-row">
+            @{
+                var now       = DuongVanDung.WebApp.Helpers.VietnamTime.Now;
+                var todayStr  = now.ToString("yyyy-MM-dd");
+                var yesterStr = now.AddDays(-1).ToString("yyyy-MM-dd");
+                var daysSinceMonday = ((int)now.DayOfWeek + 6) % 7;
+                var weekStart = now.AddDays(-daysSinceMonday).ToString("yyyy-MM-dd");
+                var m1from    = new DateTime(now.Year, now.Month, 1).ToString("yyyy-MM-dd");
+                var m3from    = now.AddMonths(-2).ToString("yyyy-MM") + "-01";
+                var yfrom     = $"{now.Year}-01-01";
+                var amtSuffix = f.MinAmount.HasValue && f.MinAmount > 0 ? $"&minAmount={f.MinAmount}" : "";
+
+                bool IsQuickActive(string from, string to)
+                {
+                    if (!f.DateFrom.HasValue || !f.DateTo.HasValue) return false;
+                    return f.DateFrom.Value.ToString("yyyy-MM-dd") == from && f.DateTo.Value.ToString("yyyy-MM-dd") == to;
+                }
+            }
+            <a href="?kho=@f.Kho&bang=@f.Bang&dateFrom=@todayStr&dateTo=@todayStr@amtSuffix"
+               class="filter-quick @(IsQuickActive(todayStr, todayStr) ? "is-active":"")">
+               Hôm nay
+            </a>
+            <a href="?kho=@f.Kho&bang=@f.Bang&dateFrom=@yesterStr&dateTo=@yesterStr@amtSuffix"
+               class="filter-quick @(IsQuickActive(yesterStr, yesterStr) ? "is-active":"")">
+               Hôm qua
+            </a>
+            <a href="?kho=@f.Kho&bang=@f.Bang&dateFrom=@weekStart&dateTo=@todayStr@amtSuffix"
+               class="filter-quick @(IsQuickActive(weekStart, todayStr) ? "is-active":"")">
+               Tuần này
+            </a>
+            <a href="?kho=@f.Kho&bang=@f.Bang&dateFrom=@m1from&dateTo=@todayStr@amtSuffix"
+               class="filter-quick @(IsQuickActive(m1from, todayStr) ? "is-active":"")">
+               Tháng này
+            </a>
+            <a href="?kho=@f.Kho&bang=@f.Bang&dateFrom=@m3from&dateTo=@todayStr@amtSuffix"
+               class="filter-quick @(IsQuickActive(m3from, todayStr) ? "is-active":"")">
+               3 tháng
+            </a>
+            <a href="?kho=@f.Kho&bang=@f.Bang&dateFrom=@yfrom&dateTo=@todayStr@amtSuffix"
+               class="filter-quick @(IsQuickActive(yfrom, todayStr) ? "is-active":"")">
+               Năm nay
+            </a>
+            <a href="?kho=@f.Kho&bang=@f.Bang" class="filter-quick @(!f.DateFrom.HasValue && !f.MinAmount.HasValue ? "is-active":"")">
+               Tất cả
+            </a>
+        </div>
+
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Từ ngày</label>
+                <input type="date" name="dateFrom" value="@f.DateFromStr" class="filter-input" />
+            </div>
+            <div class="filter-group">
+                <label>Đến ngày</label>
+                <input type="date" name="dateTo" value="@f.DateToStr" class="filter-input" />
+            </div>
+            @if (!Model.IsXuat)
+            {
+                <div class="filter-group">
+                    <label>Giá trị tối thiểu</label>
+                    <select name="minAmount" class="filter-select">
+                        @{
+                            var ma = f.MinAmount ?? 0;
+                        }
+                        <option value="0"        selected="@(ma == 0          ? "selected" : null)">Tất cả</option>
+                        <option value="5000000"  selected="@(ma == 5000000    ? "selected" : null)">&gt; 5 triệu</option>
+                        <option value="10000000" selected="@(ma == 10000000   ? "selected" : null)">&gt; 10 triệu</option>
+                        <option value="20000000" selected="@(ma == 20000000   ? "selected" : null)">&gt; 20 triệu</option>
+                        <option value="100000000"selected="@(ma == 100000000  ? "selected" : null)">&gt; 100 triệu</option>
+                    </select>
+                </div>
+            }
+            <button type="submit" class="filter-apply-btn">Lọc</button>
+            @if (f.DateFrom.HasValue || f.DateTo.HasValue || (f.MinAmount.HasValue && f.MinAmount > 0))
+            {
+                <a href="?kho=@f.Kho&bang=@f.Bang" class="filter-clear-btn">Xóa lọc</a>
+            }
+        </div>
+    </form>
+
+    <!-- ── KPI tổng hợp ─────────────────────────────────────────────────── -->
+    <div class="data-kpi-row">
+        <div class="data-kpi data-kpi--blue">
+            <p class="kpi-label">Tổng phiếu</p>
+            <p class="kpi-value">@Model.Total.ToString("#,0")</p>
+        </div>
+        <div class="data-kpi data-kpi--green">
+            <p class="kpi-label">Tổng số lượng</p>
+            <p class="kpi-value">@Model.TongSoLuongAll.ToString("#,0.##") <small>kg</small></p>
+        </div>
+        <div class="data-kpi data-kpi--teal">
+            <p class="kpi-label">Tổng quy chuẩn</p>
+            <p class="kpi-value">@Model.TongKgAll.ToString("#,0.##") <small>kg</small></p>
+        </div>
+        @if (!Model.IsXuat)
+        {
+            <div class="data-kpi data-kpi--gold">
+                <p class="kpi-label">Tổng thành tiền</p>
+                <p class="kpi-value">@Model.TongTienAll.ToString("#,0") <small>đ</small></p>
+            </div>
+        }
+        <div class="data-kpi data-kpi--gray">
+            <p class="kpi-label">Trang</p>
+            <p class="kpi-value">@f.Page / @Model.TotalPages</p>
+        </div>
+    </div>
+
+    <!-- ── Bảng dữ liệu ─────────────────────────────────────────────────── -->
+    <div class="cust-table-wrap">
+        <table class="cust-table">
+            <thead>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th>@dateLabel</th>
+                    <th>@nameLabel</th>
+                    <th>Số điện thoại</th>
+                    <th>@addrLabel</th>
+                    <th style="text-align:right">Số lượng</th>
+                    <th style="text-align:right">Độ ẩm</th>
+                    <th style="text-align:right">Tạp chất</th>
+                    @if (Model.ShowDem)
+                    {
+                        <th style="text-align:right">Đếm</th>
+                    }
+                    <th style="text-align:right">TL trừ bì</th>
+                    <th style="text-align:right">Số bao</th>
+                    <th style="text-align:right">Quy chuẩn</th>
+                    @if (!Model.IsXuat)
+                    {
+                        <th style="text-align:right">Thành tiền (đ)</th>
+                        <th>Thanh toán</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var startStt = (f.Page - 1) * DuongVanDung.WebApp.Models.Data.DataFilter.PageSize + 1;
+                }
+                @foreach (var (row, idx) in Model.Rows.Select((r, i) => (r, i)))
+                {
+                    <tr class="cust-row">
+                        <td class="col-stt"><span class="stt-num">@(startStt + idx)</span></td>
+                        <td><span style="white-space:nowrap">@row.NgayNhap.ToString("dd/MM/yyyy")</span></td>
+                        <td>
+                            <span style="font-weight:600">@row.TenKhachHang</span>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(row.SDT))
+                            { <a href="tel:@row.SDT" class="sdt-link">@row.SDT</a> }
+                            else { <span class="text-muted-sm">—</span> }
+                        </td>
+                        <td>
+                            <span class="diachi-text" title="@row.DiaChi">
+                                @(string.IsNullOrEmpty(row.DiaChi) ? "—" : row.DiaChi)
+                            </span>
+                        </td>
+                        <td style="text-align:right">
+                            <span style="font-weight:600">@row.SoLuong.ToString("#,0.##")</span>
+                        </td>
+                        <td style="text-align:right">
+                            @if (row.DoAm > 0)
+                            { <span>@row.DoAm.ToString("#,0.##")</span> }
+                            else { <span class="text-muted-sm">—</span> }
+                        </td>
+                        <td style="text-align:right">
+                            @if (row.TapChat > 0)
+                            { <span>@row.TapChat.ToString("#,0.##")</span> }
+                            else { <span class="text-muted-sm">—</span> }
+                        </td>
+                        @if (Model.ShowDem)
+                        {
+                            <td style="text-align:right">
+                                @if (row.Dem.HasValue && row.Dem > 0)
+                                { <span>@row.Dem.Value.ToString("#,0.##")</span> }
+                                else { <span class="text-muted-sm">—</span> }
+                            </td>
+                        }
+                        <td style="text-align:right">
+                            @if (row.TrongLuongTruBi > 0)
+                            { <span>@row.TrongLuongTruBi.ToString("#,0.##")</span> }
+                            else { <span class="text-muted-sm">—</span> }
+                        </td>
+                        <td style="text-align:right">
+                            @if (row.SoBao > 0)
+                            { <span>@row.SoBao.ToString("#,0")</span> }
+                            else { <span class="text-muted-sm">—</span> }
+                        </td>
+                        <td style="text-align:right">
+                            <span style="font-weight:600">@row.QuyChuan.ToString("#,0.##")</span>
+                        </td>
+                        @if (!Model.IsXuat)
+                        {
+                            <td style="text-align:right">
+                                @if (row.ThanhTien >= 100_000_000)
+                                {
+                                    <span class="tien-big">@row.ThanhTien.ToString("#,0")</span>
+                                }
+                                else
+                                {
+                                    <span class="tien-val">@row.ThanhTien.ToString("#,0")</span>
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var ck = row.PhuongThuc.Trim().ToLowerInvariant();
+                                }
+                                @if (ck == "yes" || ck == "có" || ck == "ck")
+                                { <span class="ck-badge">Chuyển khoản</span> }
+                                else
+                                { <span class="tm-badge">Tiền mặt</span> }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.Rows.Count == 0)
+        {
+            <div class="table-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <p>Không có dữ liệu phù hợp với bộ lọc hiện tại</p>
+            </div>
+        }
+    </div>
+
+    <!-- ── Phân trang ────────────────────────────────────────────────────── -->
+    @if (Model.TotalPages > 1)
+    {
+        string PageUrl(int p) {
+            var qs = $"?kho={f.Kho}&bang={f.Bang}&page={p}";
+            if (f.DateFrom.HasValue) qs += $"&dateFrom={f.DateFromStr}";
+            if (f.DateTo.HasValue)   qs += $"&dateTo={f.DateToStr}";
+            if (f.MinAmount.HasValue && f.MinAmount > 0) qs += $"&minAmount={f.MinAmount}";
+            return "/Data/Table" + qs;
+        }
+
+        <div class="cust-pagination">
+            @if (f.Page > 1)
+            {
+                <a href="@PageUrl(f.Page - 1)" class="page-btn page-btn--nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </a>
+            }
+            @for (var p = Math.Max(1, f.Page - 3); p <= Math.Min(Model.TotalPages, f.Page + 3); p++)
+            {
+                <a href="@PageUrl(p)" class="page-btn @(p == f.Page ? "is-active" : "")">@p</a>
+            }
+            @if (f.Page < Model.TotalPages)
+            {
+                <a href="@PageUrl(f.Page + 1)" class="page-btn page-btn--nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </a>
+            }
+            <span class="page-info">Trang @f.Page / @Model.TotalPages · @Model.Total.ToString("#,0") bản ghi</span>
+        </div>
+    }
+}

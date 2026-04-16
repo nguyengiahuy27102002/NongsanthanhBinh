@@ -1,0 +1,107 @@
+@model DuongVanDung.WebApp.Models.Product.StockMovementViewModel
+@{
+    ViewData["Title"] = "Nhập – Xuất – Tồn";
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">Báo cáo sản phẩm</p>
+        <h1>Nhập – Xuất – Tồn</h1>
+        <p class="cust-subtitle">Biến động hàng hoá @Model.Days ngày gần nhất</p>
+    </div>
+    <div class="cust-stats-row">
+        <a href="?days=7"  class="cust-stat-pill @(Model.Days==7  ?"cust-stat-pill--blue":"")">7 ngày</a>
+        <a href="?days=30" class="cust-stat-pill @(Model.Days==30 ?"cust-stat-pill--blue":"")">30 ngày</a>
+        <a href="?days=90" class="cust-stat-pill @(Model.Days==90 ?"cust-stat-pill--blue":"")">90 ngày</a>
+    </div>
+</div>
+
+<!-- ── Cà phê ─────────────────────────────────────────────────── -->
+<div class="analysis-card analysis-card--full" style="margin-bottom:1rem">
+    <div class="analysis-card-header">
+        <span class="sp-badge sp-badge--caphe">Cà phê</span>
+        <h3 style="margin:0;font-size:1rem;font-weight:700">Nhập – Xuất theo ngày</h3>
+    </div>
+    <div class="cust-table-wrap" style="margin-top:.75rem">
+        <table class="cust-table">
+            <thead>
+                <tr>
+                    <th>Ngày</th>
+                    <th>Kho</th>
+                    <th style="text-align:right;color:#16a34a">Nhập (kg)</th>
+                    <th style="text-align:right;color:#dc2626">Xuất (kg)</th>
+                    <th style="text-align:right">Chênh lệch</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.CaPhe)
+                {
+                    var diff = r.Nhap - r.Xuat;
+                    <tr class="cust-row">
+                        <td>@r.Ngay.ToString("dd/MM/yyyy")</td>
+                        <td><span class="kho-badge kho-badge--@KhoBadgeKey(r.Kho)">@r.Kho</span></td>
+                        <td style="text-align:right;font-weight:600;color:#16a34a;font-variant-numeric:tabular-nums">@r.Nhap.ToString("#,0.##")</td>
+                        <td style="text-align:right;color:#dc2626;font-variant-numeric:tabular-nums">@r.Xuat.ToString("#,0.##")</td>
+                        <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:@(diff>=0?"#16a34a":"#dc2626")">
+                            @(diff >= 0 ? "+" : "")@diff.ToString("#,0.##")
+                        </td>
+                    </tr>
+                }
+                @if (Model.CaPhe.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center" style="padding:1.5rem;color:#9ca3af">Không có dữ liệu</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── Tiêu ───────────────────────────────────────────────────── -->
+<div class="analysis-card analysis-card--full">
+    <div class="analysis-card-header">
+        <span class="sp-badge sp-badge--tieu">Tiêu</span>
+        <h3 style="margin:0;font-size:1rem;font-weight:700">Nhập – Xuất theo ngày</h3>
+    </div>
+    <div class="cust-table-wrap" style="margin-top:.75rem">
+        <table class="cust-table">
+            <thead>
+                <tr>
+                    <th>Ngày</th>
+                    <th>Kho</th>
+                    <th style="text-align:right;color:#16a34a">Nhập (kg)</th>
+                    <th style="text-align:right;color:#dc2626">Xuất (kg)</th>
+                    <th style="text-align:right">Chênh lệch</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Tieu)
+                {
+                    var diff = r.Nhap - r.Xuat;
+                    <tr class="cust-row">
+                        <td>@r.Ngay.ToString("dd/MM/yyyy")</td>
+                        <td><span class="kho-badge kho-badge--@KhoBadgeKey(r.Kho)">@r.Kho</span></td>
+                        <td style="text-align:right;font-weight:600;color:#16a34a;font-variant-numeric:tabular-nums">@r.Nhap.ToString("#,0.##")</td>
+                        <td style="text-align:right;color:#dc2626;font-variant-numeric:tabular-nums">@r.Xuat.ToString("#,0.##")</td>
+                        <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:@(diff>=0?"#16a34a":"#dc2626")">
+                            @(diff >= 0 ? "+" : "")@diff.ToString("#,0.##")
+                        </td>
+                    </tr>
+                }
+                @if (Model.Tieu.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center" style="padding:1.5rem;color:#9ca3af">Không có dữ liệu</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@functions {
+    static string KhoBadgeKey(string kho) => kho switch {
+        "DVD"            => "dvd",
+        "Dương Văn Dũng" => "dvd",
+        "Thông Đào"      => "thongdao",
+        "Ymoal"          => "ymoal",
+        _                => "other"
+    };
+}

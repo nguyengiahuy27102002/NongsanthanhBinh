@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Nông sản Thanh Bình</title>
+    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin="anonymous" />
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/customer.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/DuongVanDung.WebApp.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm portal-nav">
+            <div class="container-fluid portal-container">
+                <a class="navbar-brand portal-brand" asp-controller="Home" asp-action="Index">Nông sản Thanh Bình</a>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">← Bảng điều khiển</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark fw-semibold" asp-controller="Customer" asp-action="Index">Khách hàng</a>
+                        </li>
+                    </ul>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="nav-logout">Đăng xuất</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="portal-container">
+        <main role="main" class="pb-3">
+            <div class="cust-shell" id="custShell">
+                <!-- ── CONTEXT MENU ──────────────────────────── -->
+                @{
+                    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+                }
+                <div id="ctxMenu" class="ctx-menu" role="menu">
+                    <div class="ctx-menu__header">Khách hàng</div>
+                    <a asp-controller="Customer" asp-action="Index"
+                       class="ctx-menu__item @(currentAction == "Index" ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                        Danh sách khách hàng
+                    </a>
+                    <a asp-controller="Customer" asp-action="Search"
+                       class="ctx-menu__item @(currentAction == "Search" ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        Tìm khách hàng
+                    </a>
+                    <div class="ctx-menu__divider"></div>
+                    <div class="ctx-menu__section">Báo cáo</div>
+                    <a asp-controller="Customer" asp-action="Analysis"
+                       class="ctx-menu__item @(currentAction == "Analysis" ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Phân tích khách hàng
+                    </a>
+                    <a asp-controller="Customer" asp-action="Financial"
+                       class="ctx-menu__item @(currentAction == "Financial" ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M12 12v4M10 14h4"/></svg>
+                        Báo cáo tài chính
+                    </a>
+                    <a asp-controller="Customer" asp-action="Behavior"
+                       class="ctx-menu__item @(currentAction == "Behavior" ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                        Báo cáo hành vi
+                    </a>
+                    <div class="ctx-menu__divider"></div>
+                    <a asp-controller="Customer" asp-action="TodayEntries"
+                       class="ctx-menu__item @(currentAction == "TodayEntries" ? "is-active" : "")">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
+                        Nhập hôm nay
+                    </a>
+                </div>
+
+                <div id="ctxOverlay" class="ctx-overlay" hidden></div>
+
+                <!-- ── PAGE CONTENT ──────────────────────────── -->
+                <div class="cust-content">
+                    @RenderBody()
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer text-muted">
+        <div class="portal-container">&copy; 2026 - Nông sản Thanh Bình</div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    (function () {
+        var menu    = document.getElementById('ctxMenu');
+        var overlay = document.getElementById('ctxOverlay');
+        var shell   = document.getElementById('custShell');
+
+        function showMenu(x, y) {
+            menu.style.left = Math.min(x, window.innerWidth  - menu.offsetWidth  - 8) + 'px';
+            menu.style.top  = Math.min(y, window.innerHeight - menu.offsetHeight - 8) + 'px';
+            menu.classList.add('is-open');
+            overlay.hidden = false;
+        }
+        function hideMenu() {
+            menu.classList.remove('is-open');
+            overlay.hidden = true;
+        }
+
+        shell.addEventListener('contextmenu', function (e) {
+            if (e.target.closest('a,button,input,select,textarea,th,td')) return;
+            e.preventDefault();
+            showMenu(e.clientX, e.clientY);
+        });
+
+        overlay.addEventListener('click', hideMenu);
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideMenu(); });
+    })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

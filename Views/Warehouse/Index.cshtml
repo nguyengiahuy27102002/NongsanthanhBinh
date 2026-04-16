@@ -1,0 +1,397 @@
+@model DuongVanDung.WebApp.Models.Warehouse.WarehouseOverviewViewModel
+@using System.Globalization
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Tổng quan kho hàng";
+    string F(decimal v) => v.ToString("#,0", CultureInfo.InvariantCulture);
+    string FL(long v) => v.ToString("#,0", CultureInfo.InvariantCulture);
+    var jo = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+}
+
+<div class="wh-shell">
+    <div class="rpt-header"><div><p class="eyebrow">Quản lý kho</p><h1>Tổng quan kho hàng</h1></div></div>
+
+    <!-- ═══ TOP KPIs: Coffee & Pepper separated ═══════════════════════ -->
+    <div class="wh-kpi-split">
+        <div class="wh-kpi-section wh-kpi-section--coffee">
+            <h3>☕ Cà phê</h3>
+            <div class="wh-kpi-row">
+                <div class="wh-kpi-item"><span>Tồn kho</span><strong>@F(Model.CoffeeTongTon) <small>kg</small></strong></div>
+                <div class="wh-kpi-item"><span>Trọng lượng trừ bì</span><strong>@F(Model.CoffeeTruBi) <small>kg</small></strong></div>
+                <div class="wh-kpi-item"><span>Quy chuẩn</span><strong>@F(Model.CoffeeQuyChuan) <small>kg</small></strong></div>
+                <div class="wh-kpi-item"><span>Nhập tháng này</span><strong>@F(Model.CoffeeMonthKg) <small>kg</small></strong></div>
+            </div>
+        </div>
+        <div class="wh-kpi-section wh-kpi-section--pepper">
+            <h3>🫙 Tiêu</h3>
+            <div class="wh-kpi-row">
+                <div class="wh-kpi-item"><span>Tồn kho</span><strong>@F(Model.PepperTongTon) <small>kg</small></strong></div>
+                <div class="wh-kpi-item"><span>Trọng lượng trừ bì</span><strong>@F(Model.PepperTruBi) <small>kg</small></strong></div>
+                <div class="wh-kpi-item"><span>Quy chuẩn</span><strong>@F(Model.PepperQuyChuan) <small>kg</small></strong></div>
+                <div class="wh-kpi-item"><span>Nhập tháng này</span><strong>@F(Model.PepperMonthKg) <small>kg</small></strong></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ WAREHOUSE CARDS (expandable) ══════════════════════════════ -->
+    <h2 class="wh-section-title">Khu vực kho <small>— bấm chọn kho để xem chi tiết</small></h2>
+    <div class="wh-cards-grid" id="whCards">
+        @foreach (var (wh, idx) in Model.Warehouses.Select((x, i) => (x, i)))
+        {
+            var sc = wh.Status switch { "active" => "wh-card--active", "normal" => "wh-card--normal", _ => "wh-card--quiet" };
+            <div class="wh-card @sc" id="whCard_@idx" onclick="expandCard(@idx)">
+                <div class="wh-card__header">
+                    <div><h2>@wh.Name</h2><span class="wh-status-badge wh-status-badge--@wh.Status">@wh.StatusLabel</span></div>
+                    <div class="wh-card__stock"><strong>@F(wh.CoffeeTongTon + wh.PepperTongTon)</strong><small>kg tồn</small></div>
+                </div>
+                <!-- Compact view (always visible) -->
+                <div class="wh-card__compact">
+                    <div class="wh-compact-row">
+                        <span>☕ Cà phê tồn</span><strong>@F(wh.CoffeeTongTon) kg</strong>
+                    </div>
+                    <div class="wh-compact-row">
+                        <span>🫙 Tiêu tồn</span><strong>@F(wh.PepperTongTon) kg</strong>
+                    </div>
+                    <div class="wh-compact-row">
+                        <span>Nhập tháng</span><strong>@F(wh.CoffeeMonthKg + wh.PepperMonthKg) kg</strong>
+                    </div>
+                    <div class="wh-compact-row">
+                        <span>Xuất tháng</span><strong>@F(wh.CoffeeExportKg + wh.PepperExportKg) kg</strong>
+                    </div>
+                </div>
+                <!-- Expanded view (hidden by default) -->
+                <div class="wh-card__expanded" id="whExpanded_@idx" style="display:none">
+                    <div class="wh-detail-grid">
+                        <div class="wh-detail-section">
+                            <h4>☕ Cà phê</h4>
+                            <div class="wh-detail-row"><span>Tồn kho</span><strong>@F(wh.CoffeeTongTon) kg</strong></div>
+                            <div class="wh-detail-row"><span>TL trừ bì</span><strong>@F(wh.CoffeeTruBi) kg</strong></div>
+                            <div class="wh-detail-row"><span>Quy chuẩn</span><strong>@F(wh.CoffeeQuyChuan) kg</strong></div>
+                            <div class="wh-detail-row"><span>Nhập tháng</span><strong>@F(wh.CoffeeMonthKg) kg</strong></div>
+                            <div class="wh-detail-row"><span>Xuất tháng</span><strong>@F(wh.CoffeeExportKg) kg</strong></div>
+                            <div class="wh-detail-row"><span>Nhập hôm nay</span><strong>@F(wh.CoffeeTodayKg) kg</strong></div>
+                            <div class="wh-detail-row"><span>Xuất hôm nay</span><strong>@F(wh.CoffeeExportTodayKg) kg</strong></div>
+                            <div class="wh-detail-row"><span>Chi mua tháng</span><strong>@FL(wh.CoffeeMonthTien) đ</strong></div>
+                            <div class="wh-detail-row"><span>Chi mua hôm nay</span><strong>@FL(wh.CoffeeTodayTien) đ</strong></div>
+                        </div>
+                        <div class="wh-detail-section">
+                            <h4>🫙 Tiêu</h4>
+                            <div class="wh-detail-row"><span>Tồn kho</span><strong>@F(wh.PepperTongTon) kg</strong></div>
+                            <div class="wh-detail-row"><span>TL trừ bì</span><strong>@F(wh.PepperTruBi) kg</strong></div>
+                            <div class="wh-detail-row"><span>Quy chuẩn</span><strong>@F(wh.PepperQuyChuan) kg</strong></div>
+                            <div class="wh-detail-row"><span>Nhập tháng</span><strong>@F(wh.PepperMonthKg) kg</strong></div>
+                            <div class="wh-detail-row"><span>Xuất tháng</span><strong>@F(wh.PepperExportKg) kg</strong></div>
+                            <div class="wh-detail-row"><span>Nhập hôm nay</span><strong>@F(wh.PepperTodayKg) kg</strong></div>
+                            <div class="wh-detail-row"><span>Xuất hôm nay</span><strong>@F(wh.PepperExportTodayKg) kg</strong></div>
+                            <div class="wh-detail-row"><span>Chi mua tháng</span><strong>@FL(wh.PepperMonthTien) đ</strong></div>
+                            <div class="wh-detail-row"><span>Chi mua hôm nay</span><strong>@FL(wh.PepperTodayTien) đ</strong></div>
+                        </div>
+                    </div>
+                    <div class="wh-card__dates">
+                        <span>Nhập gần nhất: <strong>@(wh.LastImportDate?.ToString("dd/MM/yyyy HH:mm") ?? "—")</strong></span>
+                        <span>Xuất gần nhất: <strong>@(wh.LastExportDate?.ToString("dd/MM/yyyy HH:mm") ?? "—")</strong></span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- ═══ HOURLY ACTIVITY CHART ═════════════════════════════════════ -->
+    <section class="rpt-card rpt-card--wide">
+        <div class="rpt-card__header"><h2>Giờ cao điểm nhập hàng</h2><span class="rpt-card__badge">Tháng @DuongVanDung.WebApp.Helpers.VietnamTime.Now.Month/@DuongVanDung.WebApp.Helpers.VietnamTime.Now.Year · Tất cả kho</span></div>
+        <div class="rpt-card__body" style="padding:1rem"><canvas id="chartHourly" height="280"></canvas></div>
+    </section>
+
+    <!-- ═══ TREND CHARTS (Coffee + Pepper, switchable period + AI) ═══ -->
+    <div class="rpt-grid-2">
+        <section class="rpt-card">
+            <div class="rpt-card__header">
+                <h2>☕ Xu hướng nhập cà phê</h2>
+                <div class="wh-period-btns" data-product="coffee">
+                    <button class="wh-period-btn" data-p="1m">1 tháng</button>
+                    <button class="wh-period-btn" data-p="3m">3 tháng</button>
+                    <button class="wh-period-btn wh-period-btn--active" data-p="6m">6 tháng</button>
+                    <button class="wh-period-btn" data-p="1y">1 năm</button>
+                    <button class="wh-period-btn" data-p="2y">2 năm</button>
+                    <button class="wh-period-btn" data-p="5y">5 năm</button>
+                </div>
+            </div>
+            <div class="rpt-card__body" style="padding:1rem"><canvas id="chartCoffeeTrend" height="200"></canvas></div>
+            <div class="wh-ai-section">
+                <button class="wh-ai-btn" onclick="toggleAI('coffee')">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.6-.6 2.6-1.8 4.1L12 15l-2.2-2.9C8.6 10.6 8 9.6 8 8a4 4 0 014-4zm0 12c3.3 0 6 1.8 6 4H6c0-2.2 2.7-4 6-4z"/></svg>
+                    Phân tích AI
+                </button>
+                <div class="wh-ai-result" id="aiCoffee" style="display:none">
+                    <div class="wh-ai-loading" id="aiCoffeeLoading">Đang phân tích dữ liệu...</div>
+                    <div class="wh-ai-content" id="aiCoffeeContent"></div>
+                </div>
+            </div>
+        </section>
+        <section class="rpt-card">
+            <div class="rpt-card__header">
+                <h2>🫙 Xu hướng nhập tiêu</h2>
+                <div class="wh-period-btns" data-product="pepper">
+                    <button class="wh-period-btn" data-p="1m">1 tháng</button>
+                    <button class="wh-period-btn" data-p="3m">3 tháng</button>
+                    <button class="wh-period-btn wh-period-btn--active" data-p="6m">6 tháng</button>
+                    <button class="wh-period-btn" data-p="1y">1 năm</button>
+                    <button class="wh-period-btn" data-p="2y">2 năm</button>
+                    <button class="wh-period-btn" data-p="5y">5 năm</button>
+                </div>
+            </div>
+            <div class="rpt-card__body" style="padding:1rem"><canvas id="chartPepperTrend" height="200"></canvas></div>
+            <div class="wh-ai-section">
+                <button class="wh-ai-btn" onclick="toggleAI('pepper')">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.6-.6 2.6-1.8 4.1L12 15l-2.2-2.9C8.6 10.6 8 9.6 8 8a4 4 0 014-4zm0 12c3.3 0 6 1.8 6 4H6c0-2.2 2.7-4 6-4z"/></svg>
+                    Phân tích AI
+                </button>
+                <div class="wh-ai-result" id="aiPepper" style="display:none">
+                    <div class="wh-ai-loading" id="aiPepperLoading">Đang phân tích dữ liệu...</div>
+                    <div class="wh-ai-content" id="aiPepperContent"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ═══ INVENTORY TREND (Coffee + Pepper) ═════════════════════════ -->
+    <div class="rpt-grid-2">
+        <section class="rpt-card">
+            <div class="rpt-card__header">
+                <h2>☕ Biến động tồn kho cà phê</h2>
+                <div class="wh-period-btns" data-type="inv" data-product="coffee">
+                    <button class="wh-period-btn" data-p="1m">1 tháng</button>
+                    <button class="wh-period-btn" data-p="3m">3 tháng</button>
+                    <button class="wh-period-btn wh-period-btn--active" data-p="6m">6 tháng</button>
+                    <button class="wh-period-btn" data-p="1y">1 năm</button>
+                    <button class="wh-period-btn" data-p="2y">2 năm</button>
+                    <button class="wh-period-btn" data-p="5y">5 năm</button>
+                </div>
+            </div>
+            <div class="rpt-card__body" style="padding:1rem"><canvas id="chartCoffeeInv" height="200"></canvas></div>
+        </section>
+        <section class="rpt-card">
+            <div class="rpt-card__header">
+                <h2>🫙 Biến động tồn kho tiêu</h2>
+                <div class="wh-period-btns" data-type="inv" data-product="pepper">
+                    <button class="wh-period-btn" data-p="1m">1 tháng</button>
+                    <button class="wh-period-btn" data-p="3m">3 tháng</button>
+                    <button class="wh-period-btn wh-period-btn--active" data-p="6m">6 tháng</button>
+                    <button class="wh-period-btn" data-p="1y">1 năm</button>
+                    <button class="wh-period-btn" data-p="2y">2 năm</button>
+                    <button class="wh-period-btn" data-p="5y">5 năm</button>
+                </div>
+            </div>
+            <div class="rpt-card__body" style="padding:1rem"><canvas id="chartPepperInv" height="200"></canvas></div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// ── Expandable warehouse cards ──────────────────────────────────
+var activeCard = -1;
+function expandCard(idx) {
+    for (var i = 0; i < @Model.Warehouses.Count; i++) {
+        var card = document.getElementById('whCard_' + i);
+        var exp = document.getElementById('whExpanded_' + i);
+        if (i === idx && activeCard !== idx) {
+            card.classList.add('wh-card--expanded');
+            exp.style.display = '';
+            activeCard = idx;
+        } else {
+            card.classList.remove('wh-card--expanded');
+            exp.style.display = 'none';
+        }
+    }
+    if (activeCard === idx && arguments.length > 0) { /* already clicked same */ }
+}
+
+(function () {
+    var whColors = ['rgba(37,99,235,0.75)','rgba(220,38,38,0.75)','rgba(217,119,6,0.75)'];
+    var whNames = @Html.Raw(JsonSerializer.Serialize(Model.Warehouses.Select(w => w.Name), jo));
+    var fmtK = function(v) { return v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v; };
+    var baseOpts = { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:12}}}}, scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(0,0,0,.05)'},beginAtZero:true,ticks:{callback:fmtK}}} };
+
+    // ── Hourly chart ────────────────────────────────────────────
+    @{
+        var hrLabels = Model.HourlyActivity.Select(h => $"{h.Hour}:00");
+        var hrData = Model.HourlyActivity.Select(h => h.Count);
+        var maxHr = Model.HourlyActivity.Count > 0 ? Model.HourlyActivity.Max(h => h.Count) : 1;
+        var hrColors = Model.HourlyActivity.Select(h => h.Count > maxHr * 0.7 ? "'rgba(220,38,38,0.8)'" : h.Count > maxHr * 0.4 ? "'rgba(37,99,235,0.8)'" : "'rgba(148,163,184,0.5)'");
+    }
+    new Chart(document.getElementById('chartHourly'), {
+        type: 'bar',
+        data: { labels: @Html.Raw(JsonSerializer.Serialize(hrLabels, jo)), datasets: [{ label: 'Số phiếu nhập', data: @Html.Raw(JsonSerializer.Serialize(hrData, jo)), backgroundColor: [@Html.Raw(string.Join(",", hrColors))], borderRadius: 6 }] },
+        options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display: false } } }
+    });
+
+    // ── Trend charts (AJAX-powered) ─────────────────────────────
+    var coffeeTrendChart = null, pepperTrendChart = null;
+
+    // Store trend data for AI analysis
+    var trendDataStore = { coffee: null, pepper: null };
+    var currentPeriod = { coffee: '6m', pepper: '6m' };
+
+    function loadTrend(product, period) {
+        currentPeriod[product] = period;
+        fetch('/Warehouse/TrendData?product=' + product + '&period=' + period)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                trendDataStore[product] = data;
+
+                // Sort by sortKey (yyyy-MM-dd) → chronological old→new
+                var sortedKeys = []; var seen = {};
+                data.sort(function(a, b) { return a.sortKey.localeCompare(b.sortKey); });
+                data.forEach(function(d) { if (!seen[d.sortKey]) { sortedKeys.push({ label: d.label, sort: d.sortKey }); seen[d.sortKey] = true; } });
+
+                var labels = sortedKeys.map(function(s) { return s.label; });
+                var datasets = [];
+                whNames.forEach(function(name, i) {
+                    var vals = sortedKeys.map(function(s) {
+                        var match = data.find(function(d) { return d.sortKey === s.sort && d.warehouse === name; });
+                        return match ? match.kg : 0;
+                    });
+                    datasets.push({ label: name, data: vals, backgroundColor: whColors[i], borderRadius: 4 });
+                });
+
+                var canvasId = product === 'coffee' ? 'chartCoffeeTrend' : 'chartPepperTrend';
+                var chartRef = product === 'coffee' ? coffeeTrendChart : pepperTrendChart;
+                if (chartRef) chartRef.destroy();
+
+                var newChart = new Chart(document.getElementById(canvasId), {
+                    type: 'bar',
+                    data: { labels: labels, datasets: datasets },
+                    options: { ...baseOpts, animation: { duration: 400 }, scales: { ...baseOpts.scales, x: { ...baseOpts.scales.x, stacked: true }, y: { ...baseOpts.scales.y, stacked: true } } }
+                });
+
+                if (product === 'coffee') coffeeTrendChart = newChart; else pepperTrendChart = newChart;
+
+                // Hide AI result when period changes
+                var aiEl = document.getElementById('ai' + product.charAt(0).toUpperCase() + product.slice(1));
+                if (aiEl) aiEl.style.display = 'none';
+            });
+    }
+
+    // Period button click handlers
+    document.querySelectorAll('.wh-period-btns').forEach(function(group) {
+        var product = group.getAttribute('data-product');
+        group.querySelectorAll('.wh-period-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                group.querySelectorAll('.wh-period-btn').forEach(function(b) { b.classList.remove('wh-period-btn--active'); });
+                btn.classList.add('wh-period-btn--active');
+                loadTrend(product, btn.getAttribute('data-p'));
+            });
+        });
+    });
+
+    // ── Inventory trend charts (line chart — cumulative stock) ────
+    var coffeeInvChart = null, pepperInvChart = null;
+
+    function loadInventory(product, period) {
+        fetch('/Warehouse/InventoryTrend?product=' + product + '&period=' + period)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            data.sort(function(a, b) { return a.sortKey.localeCompare(b.sortKey); });
+            var sortedKeys = []; var seen = {};
+            data.forEach(function(d) { if (!seen[d.sortKey]) { sortedKeys.push({ label: d.label, sort: d.sortKey }); seen[d.sortKey] = true; } });
+
+            var labels = sortedKeys.map(function(s) { return s.label; });
+            var datasets = [];
+            var lineColors = ['rgba(37,99,235,1)','rgba(220,38,38,1)','rgba(217,119,6,1)'];
+            var bgColors = ['rgba(37,99,235,0.1)','rgba(220,38,38,0.1)','rgba(217,119,6,0.1)'];
+            whNames.forEach(function(name, i) {
+                var vals = sortedKeys.map(function(s) {
+                    var match = data.find(function(d) { return d.sortKey === s.sort && d.warehouse === name; });
+                    return match ? match.kg : 0;
+                });
+                datasets.push({ label: name, data: vals, borderColor: lineColors[i], backgroundColor: bgColors[i], tension: 0.3, fill: true, pointRadius: 2, borderWidth: 2 });
+            });
+
+            var canvasId = product === 'coffee' ? 'chartCoffeeInv' : 'chartPepperInv';
+            var chartRef = product === 'coffee' ? coffeeInvChart : pepperInvChart;
+            if (chartRef) chartRef.destroy();
+
+            var newChart = new Chart(document.getElementById(canvasId), {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: { ...baseOpts, animation: { duration: 400 } }
+            });
+
+            if (product === 'coffee') coffeeInvChart = newChart; else pepperInvChart = newChart;
+        });
+    }
+
+    // Inventory period button handlers
+    document.querySelectorAll('.wh-period-btns[data-type="inv"]').forEach(function(group) {
+        var product = group.getAttribute('data-product');
+        group.querySelectorAll('.wh-period-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                group.querySelectorAll('.wh-period-btn').forEach(function(b) { b.classList.remove('wh-period-btn--active'); });
+                btn.classList.add('wh-period-btn--active');
+                loadInventory(product, btn.getAttribute('data-p'));
+            });
+        });
+    });
+
+    // Initial load
+    loadTrend('coffee', '6m');
+    loadTrend('pepper', '6m');
+    loadInventory('coffee', '6m');
+    loadInventory('pepper', '6m');
+
+    // ── AI Analysis (inside same scope so it can access currentPeriod) ──
+    window.toggleAI = function(product) {
+    var key = product.charAt(0).toUpperCase() + product.slice(1);
+    var container = document.getElementById('ai' + key);
+    var loading = document.getElementById('ai' + key + 'Loading');
+    var content = document.getElementById('ai' + key + 'Content');
+
+    if (container.style.display !== 'none') {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = '';
+    loading.style.display = '';
+    loading.textContent = 'Đang kết nối AI...';
+    content.innerHTML = '';
+
+    var period = currentPeriod[product];
+    var url = '/Warehouse/AiAnalysis?product=' + product + '&period=' + period;
+
+    console.log('AI: fetching ' + url);
+
+    fetch(url, { credentials: 'same-origin' })
+    .then(function(r) {
+        console.log('AI: response status ' + r.status);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
+    .then(function(result) {
+        console.log('AI: got result', result);
+        loading.style.display = 'none';
+        if (result.analysis) {
+            var html = result.analysis
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/### /g, '<h4 style="margin:1rem 0 .5rem;color:#0f172a">')
+                .replace(/\n- /g, '<br>• ')
+                .replace(/\n/g, '<br>');
+            content.innerHTML = '<div class="wh-ai-text">' + html + '</div>';
+        } else if (result.error) {
+            content.innerHTML = '<p class="wh-ai-error">' + result.error + '</p>';
+        } else {
+            content.innerHTML = '<p class="wh-ai-error">Phản hồi không hợp lệ: ' + JSON.stringify(result) + '</p>';
+        }
+    })
+    .catch(function(err) {
+        console.error('AI error:', err);
+        loading.style.display = 'none';
+        content.innerHTML = '<p class="wh-ai-error">Lỗi: ' + err.message + '</p>';
+    });
+};
+})();
+</script>
+}

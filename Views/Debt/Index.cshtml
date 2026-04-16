@@ -1,0 +1,185 @@
+@model DuongVanDung.WebApp.Models.Debt.DebtViewModel
+@{
+    ViewData["Title"] = "Công nợ & Gửi kho";
+    var f = Model.Filter;
+    var k = Model.Kpi;
+}
+
+<div class="rpt-shell">
+    <div class="rpt-header">
+        <div>
+            <p class="eyebrow">Quản lý</p>
+            <h1>Công nợ & Hàng gửi kho</h1>
+            <p class="rpt-sub">Theo dõi hàng gửi kho và công nợ khách hàng — Cà phê & Tiêu</p>
+        </div>
+    </div>
+
+    <!-- ── KPI ─────────────────────────────────────────────────────── -->
+    <div class="rpt-kpi-grid">
+        <div class="rpt-kpi rpt-kpi--blue">
+            <span class="rpt-kpi__label">Khách có công nợ</span>
+            <strong class="rpt-kpi__value">@k.TotalCustomers</strong>
+        </div>
+        <div class="rpt-kpi rpt-kpi--green">
+            <span class="rpt-kpi__label">Khách gửi kho</span>
+            <strong class="rpt-kpi__value">@k.CustomersWithGoods</strong>
+        </div>
+        <div class="rpt-kpi rpt-kpi--amber">
+            <span class="rpt-kpi__label">Cà phê gửi kho</span>
+            <strong class="rpt-kpi__value">@k.TotalCoffeeKg.ToString("#,0") <small>kg</small></strong>
+        </div>
+        <div class="rpt-kpi rpt-kpi--purple">
+            <span class="rpt-kpi__label">Tiêu gửi kho</span>
+            <strong class="rpt-kpi__value">@k.TotalPepperKg.ToString("#,0") <small>kg</small></strong>
+        </div>
+        @if (k.TotalDebtAmount != 0)
+        {
+            <div class="rpt-kpi @(k.TotalDebtAmount > 0 ? "rpt-kpi--danger" : "rpt-kpi--teal")">
+                <span class="rpt-kpi__label">@(k.TotalDebtAmount > 0 ? "Tổng khách nợ" : "Tổng mình nợ khách")</span>
+                <strong class="rpt-kpi__value">@Math.Abs(k.TotalDebtAmount).ToString("#,0") <small>đ</small></strong>
+            </div>
+        }
+        @if (k.TotalPrepaid > 0)
+        {
+            <div class="rpt-kpi rpt-kpi--gold">
+                <span class="rpt-kpi__label">Tổng trả trước</span>
+                <strong class="rpt-kpi__value">@k.TotalPrepaid.ToString("#,0") <small>đ</small></strong>
+            </div>
+        }
+    </div>
+
+    <!-- ── FILTER ──────────────────────────────────────────────────── -->
+    <form method="get" asp-action="Index" class="rpt-filter-bar">
+        <div class="rpt-filter-row">
+            <div class="filter-group" style="flex:2">
+                <label>Tìm kiếm</label>
+                <input type="text" name="search" value="@f.Search" placeholder="Tên khách hàng hoặc SĐT..." class="filter-input" />
+            </div>
+            <div class="filter-group">
+                <label>Sản phẩm</label>
+                <select name="product" class="filter-select">
+                    <option value="">Tất cả</option>
+                    <option value="coffee" selected="@(f.Product == "coffee" ? "selected" : null)">Cà phê</option>
+                    <option value="pepper" selected="@(f.Product == "pepper" ? "selected" : null)">Tiêu</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Sắp xếp</label>
+                <select name="sort" class="filter-select">
+                    <option value="debt" selected="@(f.Sort == "debt" ? "selected" : null)">Nợ nhiều nhất</option>
+                    <option value="volume" selected="@(f.Sort == "volume" ? "selected" : null)">Gửi kho nhiều nhất</option>
+                    <option value="recent" selected="@(f.Sort == "recent" ? "selected" : null)">Giao dịch gần nhất</option>
+                    <option value="name" selected="@(f.Sort == "name" ? "selected" : null)">Tên A-Z</option>
+                </select>
+            </div>
+            <button type="submit" class="filter-apply-btn">Lọc</button>
+            @if (!string.IsNullOrEmpty(f.Search) || !string.IsNullOrEmpty(f.Product))
+            {
+                <a href="@Url.Action("Index")" class="filter-clear-btn">Xóa lọc</a>
+            }
+        </div>
+    </form>
+
+    <!-- ── BẢNG CÔNG NỢ ───────────────────────────────────────────── -->
+    <section class="rpt-card rpt-card--wide">
+        <div class="rpt-card__header">
+            <h2>Danh sách công nợ khách hàng</h2>
+            <span class="rpt-card__badge">@Model.TotalCustomers khách</span>
+        </div>
+        <div class="rpt-card__body rpt-card__body--table">
+            @if (Model.Customers.Count == 0)
+            {
+                <div style="text-align:center;padding:3rem 2rem;color:#64748b">
+                    @if (k.TotalCustomers == 0)
+                    {
+                        <h3 style="color:#0f172a;font-size:1.1rem;margin-bottom:.5rem">Chưa có dữ liệu công nợ</h3>
+                        <p>Hệ thống tổng hợp dữ liệu từ bảng <strong>noCaPhe</strong> và <strong>noTieu</strong>.<br/>
+                        Bên dưới là danh sách hoạt động khách hàng từ dữ liệu nhập hàng.</p>
+                    }
+                    else
+                    {
+                        <p>Không tìm thấy kết quả phù hợp.</p>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="overflow-x:auto">
+                <table class="rpt-table" style="min-width:900px">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Khách hàng</th>
+                            <th>SĐT</th>
+                            <th>Địa chỉ</th>
+                            <th style="text-align:right">Cà phê gửi (kg)</th>
+                            <th style="text-align:right">Tiêu gửi (kg)</th>
+                            <th style="text-align:right">Tổng gửi (kg)</th>
+                            <th style="text-align:right">Nợ tiền (đ)</th>
+                            <th style="text-align:right">Tổng nhập (kg)</th>
+                            <th style="text-align:right">Đã trả (đ)</th>
+                            <th style="text-align:right">Giao dịch</th>
+                            <th>GD cuối</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{var start = (f.Page - 1) * DuongVanDung.WebApp.Models.Debt.DebtFilter.PageSize + 1;}
+                        @foreach (var (c, idx) in Model.Customers.Select((x, i) => (x, i)))
+                        {
+                            var hasDebt = c.DebtAmount != 0;
+                            var hasGoods = c.TotalInStore > 0;
+                            <tr class="@(hasDebt || hasGoods ? "" : "")">
+                                <td>@(start + idx)</td>
+                                <td><strong>@c.Name</strong></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(c.Phone) && c.Phone != "0")
+                                    { <a href="tel:@c.Phone" class="sdt-link">@c.Phone</a> }
+                                    else { <span class="text-muted-sm">—</span> }
+                                </td>
+                                <td><span class="diachi-text" title="@c.Address">@(string.IsNullOrEmpty(c.Address) ? "—" : c.Address)</span></td>
+                                <td style="text-align:right">
+                                    @if (c.CoffeeInStore > 0) { <span style="font-weight:600;color:#92400e">@c.CoffeeInStore.ToString("#,0")</span> }
+                                    else { <span class="text-muted-sm">—</span> }
+                                </td>
+                                <td style="text-align:right">
+                                    @if (c.PepperInStore > 0) { <span style="font-weight:600;color:#166534">@c.PepperInStore.ToString("#,0")</span> }
+                                    else { <span class="text-muted-sm">—</span> }
+                                </td>
+                                <td style="text-align:right;font-weight:700">
+                                    @if (c.TotalInStore > 0) { @c.TotalInStore.ToString("#,0") }
+                                    else { <span class="text-muted-sm">0</span> }
+                                </td>
+                                <td style="text-align:right">
+                                    @if (c.DebtAmount > 0) { <span style="color:#dc2626;font-weight:700">@c.DebtAmount.ToString("#,0")</span> }
+                                    else if (c.DebtAmount < 0) { <span style="color:#15803d;font-weight:700">@c.DebtAmount.ToString("#,0")</span> }
+                                    else { <span class="text-muted-sm">0</span> }
+                                </td>
+                                <td style="text-align:right">@c.TotalImported.ToString("#,0")</td>
+                                <td style="text-align:right">@c.TotalPaid.ToString("#,0")</td>
+                                <td style="text-align:right">@c.TotalTransactions</td>
+                                <td style="white-space:nowrap">@(c.LastTransaction?.ToString("dd/MM/yyyy") ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="cust-pagination" style="padding:1rem">
+                        @for (var p = Math.Max(1, f.Page - 3); p <= Math.Min(Model.TotalPages, f.Page + 3); p++)
+                        {
+                            var pUrl = $"?page={p}";
+                            if (!string.IsNullOrEmpty(f.Search)) pUrl += $"&search={f.Search}";
+                            if (!string.IsNullOrEmpty(f.Product)) pUrl += $"&product={f.Product}";
+                            if (!string.IsNullOrEmpty(f.Sort)) pUrl += $"&sort={f.Sort}";
+                            <a href="@pUrl" class="page-btn @(p == f.Page ? "is-active" : "")">@p</a>
+                        }
+                        <span class="page-info">Trang @f.Page / @Model.TotalPages · @Model.TotalCustomers khách</span>
+                    </div>
+                }
+            }
+        </div>
+    </section>
+</div>

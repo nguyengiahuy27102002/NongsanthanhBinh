@@ -1,0 +1,184 @@
+@model DuongVanDung.WebApp.Models.Customer.CustomerDetailViewModel
+@{
+    var k = Model.Customer;
+    ViewData["Title"] = k.TenKhachHang;
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">
+            <a asp-action="Index" class="breadcrumb-link">Danh sách khách hàng</a>
+            <span class="breadcrumb-sep">›</span>
+            Chi tiết
+        </p>
+        <h1>@k.TenKhachHang</h1>
+    </div>
+    <a asp-action="Index" class="btn-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Quay lại
+    </a>
+</div>
+
+<!-- KPI cards -->
+<div class="detail-kpi-row">
+    <div class="detail-kpi detail-kpi--blue">
+        <p class="kpi-label">Tổng phiếu</p>
+        <p class="kpi-value">@Model.TotalPhieu.ToString("#,0")</p>
+        <p class="kpi-sub">@Model.SoPhieuCaPhe cà phê · @Model.SoPhieuTieu tiêu</p>
+    </div>
+    <div class="detail-kpi detail-kpi--green">
+        <p class="kpi-label">Trọng lượng cà phê</p>
+        <p class="kpi-value">@Model.TongKgCaPhe.ToString("#,0.##") <small>kg</small></p>
+        <p class="kpi-sub">@Model.SoPhieuCaPhe phiếu</p>
+    </div>
+    <div class="detail-kpi detail-kpi--green">
+        <p class="kpi-label">Trọng lượng tiêu</p>
+        <p class="kpi-value">@Model.TongKgTieu.ToString("#,0.##") <small>kg</small></p>
+        <p class="kpi-sub">@Model.SoPhieuTieu phiếu</p>
+    </div>
+    <div class="detail-kpi detail-kpi--gold">
+        <p class="kpi-label">Tổng tiền đã chi</p>
+        <p class="kpi-value">@Model.TongTien.ToString("#,0") <small>đ</small></p>
+        <p class="kpi-sub">@Model.TongTienCaPhe.ToString("#,0") cà · @Model.TongTienTieu.ToString("#,0") tiêu</p>
+    </div>
+</div>
+
+<!-- Thông tin khách hàng -->
+<div class="detail-grid">
+    <div class="detail-info-card">
+        <h3 class="card-title">Thông tin cá nhân</h3>
+        <div class="info-rows">
+            <div class="info-row">
+                <span class="info-label">Họ và tên</span>
+                <span class="info-value"><strong>@k.TenKhachHang</strong></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Giới tính</span>
+                <span class="info-value">
+                    @if (!string.IsNullOrEmpty(k.GioiTinh))
+                    { <span class="gender-badge gender-badge--@k.GioiTinh.ToLower().Replace("ữ","u")">@k.GioiTinh</span> }
+                    else { <span class="text-muted-sm">Chưa có</span> }
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Ngày sinh</span>
+                <span class="info-value">@(k.NgaySinh.HasValue ? k.NgaySinh.Value.ToString("dd/MM/yyyy") : "—")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Số điện thoại</span>
+                <span class="info-value">
+                    @if (!string.IsNullOrEmpty(k.SDT))
+                    { <a href="tel:@k.SDT" class="sdt-link">@k.SDT</a> }
+                    else { <span class="text-muted-sm">—</span> }
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Số CCCD</span>
+                <span class="info-value cccd-val">@(string.IsNullOrEmpty(k.CCCD) ? "—" : k.CCCD)</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Ngày cấp CCCD</span>
+                <span class="info-value">@(k.NgayCap.HasValue ? k.NgayCap.Value.ToString("dd/MM/yyyy") : "—")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Địa chỉ</span>
+                <span class="info-value">@(string.IsNullOrEmpty(k.DiaChi) ? "—" : k.DiaChi)</span>
+            </div>
+            @if (!string.IsNullOrEmpty(k.GhiChu))
+            {
+                <div class="info-row">
+                    <span class="info-label">Ghi chú</span>
+                    <span class="info-value">@k.GhiChu</span>
+                </div>
+            }
+            <div class="info-row">
+                <span class="info-label">Ngày tạo tài khoản</span>
+                <span class="info-value">@(k.NgayTaoTaiKhoan.HasValue ? k.NgayTaoTaiKhoan.Value.ToString("dd/MM/yyyy") : "—")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lịch sử giao dịch -->
+<div class="detail-section">
+    <div class="detail-section-header">
+        <h3>Lịch sử giao dịch</h3>
+        <div class="tx-filter-row">
+            <button class="tx-filter is-active" data-filter="all">Tất cả (@Model.TotalPhieu)</button>
+            <button class="tx-filter" data-filter="caphe">Cà phê (@Model.SoPhieuCaPhe)</button>
+            <button class="tx-filter" data-filter="tieu">Tiêu (@Model.SoPhieuTieu)</button>
+        </div>
+    </div>
+
+    @if (Model.Transactions.Count == 0)
+    {
+        <div class="table-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <p>Chưa có giao dịch nào</p>
+        </div>
+    }
+    else
+    {
+        <div class="cust-table-wrap">
+            <table class="cust-table" id="txTable">
+                <thead>
+                    <tr>
+                        <th>Ngày nhập</th>
+                        <th>Sản phẩm</th>
+                        <th>Kho</th>
+                        <th>Loại</th>
+                        <th style="text-align:right">Số lượng (kg)</th>
+                        <th style="text-align:right">Thành tiền (đ)</th>
+                        <th>Thanh toán</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.Transactions)
+                    {
+                        var filterClass = t.SanPham == "Cà phê" ? "tx-caphe" : "tx-tieu";
+                        <tr class="tx-row @filterClass">
+                            <td>@t.NgayNhap.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="sp-badge sp-badge--@(t.SanPham == "Cà phê" ? "caphe" : "tieu")">
+                                    @t.SanPham
+                                </span>
+                            </td>
+                            <td><span class="kho-text">@t.Kho</span></td>
+                            <td><span class="loai-badge">@t.LoaiNhap</span></td>
+                            <td style="text-align:right">@t.QuyChuan.ToString("#,0.##")</td>
+                            <td style="text-align:right"><strong>@t.ThanhTien.ToString("#,0")</strong></td>
+                            <td>
+                                @if (t.PhuongThuc == "CK" || t.PhuongThuc.ToUpper() == "CK")
+                                { <span class="ck-badge">Chuyển khoản</span> }
+                                else if (!string.IsNullOrEmpty(t.PhuongThuc))
+                                { <span class="tm-badge">Tiền mặt</span> }
+                                else { <span class="text-muted-sm">—</span> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.tx-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tx-filter').forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            const f = btn.dataset.filter;
+            document.querySelectorAll('.tx-row').forEach(row => {
+                if (f === 'all') row.style.display = '';
+                else if (f === 'caphe') row.style.display = row.classList.contains('tx-caphe') ? '' : 'none';
+                else row.style.display = row.classList.contains('tx-tieu') ? '' : 'none';
+            });
+        });
+    });
+</script>
+}

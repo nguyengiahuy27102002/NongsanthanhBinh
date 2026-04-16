@@ -1,0 +1,101 @@
+@model DuongVanDung.WebApp.Models.Customer.CustomerBehaviorViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Báo cáo hành vi";
+    var maxDay = Model.GiaoDichTheoNgay.Count > 0 ? Model.GiaoDichTheoNgay.Max(x => x.SoGiaoDich) : 1;
+    var maxRet = Model.KhachQuayLai.Count > 0 ? Model.KhachQuayLai.Max(x => x.TongLanMua) : 1;
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">Báo cáo</p>
+        <h1>Báo cáo hành vi khách hàng</h1>
+    </div>
+</div>
+
+<div class="behavior-grid">
+
+    <!-- Tần suất mua hàng -->
+    <div class="analysis-card">
+        <div class="analysis-card__header">
+            <h2>Phân khúc tần suất mua</h2>
+            <span class="badge badge--blue">Cà phê sỉ</span>
+        </div>
+        <div class="freq-donut-wrap">
+            @{
+                var total = Model.TanSuatMuaHang.Sum(x => x.SoKhach);
+            }
+            <div class="freq-legend">
+                @foreach (var f in Model.TanSuatMuaHang)
+                {
+                    var pct = total > 0 ? (f.SoKhach * 100.0 / total) : 0;
+                    <div class="freq-row">
+                        <span class="freq-dot" style="background:@f.MauSac"></span>
+                        <span class="freq-label">@f.NhomTanSuat</span>
+                        <div class="bar-track bar-track--sm">
+                            <div class="bar-fill" style="width:@pct.ToString("0.#",CultureInfo.InvariantCulture)%; background:@f.MauSac"></div>
+                        </div>
+                        <span class="freq-count">@f.SoKhach khách</span>
+                        <span class="freq-pct">@pct.ToString("0.#",CultureInfo.InvariantCulture)%</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Giao dịch theo ngày trong tuần -->
+    <div class="analysis-card">
+        <div class="analysis-card__header">
+            <h2>Giao dịch theo ngày trong tuần</h2>
+            <span class="badge badge--coffee">3 tháng gần nhất</span>
+        </div>
+        <div class="spark-chart spark-chart--tall">
+            @foreach (var d in Model.GiaoDichTheoNgay)
+            {
+                var h = maxDay > 0 ? (d.SoGiaoDich * 100.0 / maxDay) : 0;
+                var shortDay = d.Ngay switch {
+                    "Monday"    => "T2",
+                    "Tuesday"   => "T3",
+                    "Wednesday" => "T4",
+                    "Thursday"  => "T5",
+                    "Friday"    => "T6",
+                    "Saturday"  => "T7",
+                    "Sunday"    => "CN",
+                    _ => d.Ngay.Length > 2 ? d.Ngay[..2] : d.Ngay
+                };
+                <div class="spark-bar-wrap" title="@d.Ngay: @d.SoGiaoDich giao dịch">
+                    <div class="spark-bar spark-bar--blue" style="height:@h.ToString("0.#",CultureInfo.InvariantCulture)%"></div>
+                    <span class="spark-label">@shortDay</span>
+                    <span class="spark-val">@d.SoGiaoDich</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Khách quay lại -->
+    <div class="analysis-card analysis-card--full">
+        <div class="analysis-card__header">
+            <h2>Khách hàng trung thành — quay lại nhiều nhất</h2>
+            <span class="badge badge--green">Top 15</span>
+        </div>
+        <div class="loyalty-list">
+            @for (var i = 0; i < Model.KhachQuayLai.Count; i++)
+            {
+                var k = Model.KhachQuayLai[i];
+                var pct = maxRet > 0 ? (k.TongLanMua * 100.0 / maxRet) : 0;
+                <div class="loyalty-row">
+                    <span class="bar-rank @(i < 3 ? "bar-rank--gold" : "")">@(i+1)</span>
+                    <div class="loyalty-info">
+                        <strong>@k.TenKhachHang</strong>
+                        <small>Lần đầu: @k.LanDauMua.ToString("dd/MM/yyyy") · Lần cuối: @k.LanCuoiMua.ToString("dd/MM/yyyy") · @k.SoNgayHoatDong ngày</small>
+                    </div>
+                    <div class="bar-track bar-track--lg">
+                        <div class="bar-fill bar-fill--coffee" style="width:@pct.ToString("0.#",CultureInfo.InvariantCulture)%"></div>
+                    </div>
+                    <span class="loyalty-count">@k.TongLanMua lần</span>
+                </div>
+            }
+        </div>
+    </div>
+
+</div>

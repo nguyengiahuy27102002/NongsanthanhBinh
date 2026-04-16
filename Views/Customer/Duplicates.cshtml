@@ -1,0 +1,129 @@
+@model DuongVanDung.WebApp.Models.Customer.DuplicateListViewModel
+@{
+    ViewData["Title"] = "Tìm khách hàng trùng";
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">
+            <a asp-action="Index" class="breadcrumb-link">Danh sách khách hàng</a>
+            <span class="breadcrumb-sep">›</span>
+            Tìm trùng
+        </p>
+        <h1>Khách hàng trùng thông tin</h1>
+        <p class="cust-subtitle">Tìm thấy @Model.TotalGroups nhóm trùng · @Model.TotalCustomers tài khoản liên quan</p>
+    </div>
+    <a asp-action="Index" class="btn-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Quay lại
+    </a>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert-success">@msg</div>
+}
+
+@if (Model.TotalGroups == 0)
+{
+    <div class="dup-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3>Không tìm thấy tài khoản trùng</h3>
+        <p>Tất cả SĐT và CCCD đều là duy nhất trong hệ thống.</p>
+    </div>
+}
+else
+{
+    <div class="dup-list">
+        @foreach (var group in Model.Groups)
+        {
+            <div class="dup-group">
+                <div class="dup-group-header">
+                    <span class="dup-type-badge dup-type-badge--@group.LoaiTrung.ToLower()">
+                        Trùng @group.LoaiTrung
+                    </span>
+                    <span class="dup-value">@group.GiaTri</span>
+                    <span class="dup-count">@group.Customers.Count tài khoản</span>
+                </div>
+
+                <div class="dup-customers">
+                    @foreach (var k in group.Customers)
+                    {
+                        var tongPhieu = k.SoPhieuCaPhe + k.SoPhieuTieu;
+                        var tongTien  = k.TongChiCaPhe + k.TongChiTieu;
+                        <div class="dup-customer-card" id="card-@k.CustomerID">
+                            <div class="dup-customer-info">
+                                <div class="cust-avatar" style="--av-color:@AvatarColor(k.CustomerID)">
+                                    @FirstLetter(k.TenKhachHang)
+                                </div>
+                                <div>
+                                    <strong>@k.TenKhachHang</strong>
+                                    <div class="dup-meta">
+                                        @if (!string.IsNullOrEmpty(k.SDT)) { <span>SĐT: @k.SDT</span> }
+                                        @if (!string.IsNullOrEmpty(k.CCCD)) { <span>CCCD: @k.CCCD</span> }
+                                        @if (!string.IsNullOrEmpty(k.DiaChi)) { <span>@k.DiaChi</span> }
+                                        @if (k.NgayTaoTaiKhoan.HasValue) { <span>Ngày tạo: @k.NgayTaoTaiKhoan.Value.ToString("dd/MM/yyyy")</span> }
+                                    </div>
+                                    <div class="dup-stats">
+                                        <span class="dup-stat">@tongPhieu phiếu</span>
+                                        <span class="dup-stat">@tongTien.ToString("#,0") đ</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dup-actions">
+                                @foreach (var other in group.Customers.Where(c => c.CustomerID != k.CustomerID))
+                                {
+                                    <form asp-action="MergeCustomers" method="post" class="dup-action-form"
+                                          onsubmit="return confirm('Gộp @Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(other.TenKhachHang)) vào @Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(k.TenKhachHang))? Thao tác này không thể hoàn tác.')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="keepId" value="@k.CustomerID" />
+                                        <input type="hidden" name="deleteId" value="@other.CustomerID" />
+                                        <button type="submit" class="btn-merge" title="Giữ tài khoản này, gộp @other.TenKhachHang vào">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M8 6H21M8 12H21M8 18H21M3 6l.01 0M3 12l.01 0M3 18l.01 0"/>
+                                            </svg>
+                                            Giữ tài khoản này
+                                        </button>
+                                    </form>
+                                }
+                                <form asp-action="DeleteCustomer" method="post" class="dup-action-form"
+                                      onsubmit="return confirm('Xóa vĩnh viễn @Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(k.TenKhachHang)) (#@k.CustomerID)? Thao tác này không thể hoàn tác.')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@k.CustomerID" />
+                                    <button type="submit" class="btn-delete-dup">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                                            <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+                                        </svg>
+                                        Xóa
+                                    </button>
+                                </form>
+                                <a asp-action="Detail" asp-route-id="@k.CustomerID" class="btn-view-dup" target="_blank">
+                                    Chi tiết
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@functions {
+    static string AvatarColor(int id) => (id % 8) switch {
+        0 => "#2563eb", 1 => "#7c3aed", 2 => "#0891b2", 3 => "#16a34a",
+        4 => "#d97706", 5 => "#dc2626", 6 => "#db2777", _ => "#64748b"
+    };
+
+    static string FirstLetter(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts[^1].Substring(0, 1).ToUpper();
+    }
+}

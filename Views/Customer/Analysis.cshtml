@@ -1,0 +1,234 @@
+@model DuongVanDung.WebApp.Models.Customer.CustomerAnalysisViewModel
+@using System.Globalization
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Phân tích khách hàng";
+    string Fmt(long v) => v.ToString("#,0", CultureInfo.InvariantCulture);
+    string FmtKg(decimal v) => v.ToString("#,0", CultureInfo.InvariantCulture);
+    var jo = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">Phân tích</p>
+        <h1>Phân tích khách hàng</h1>
+        <p class="cust-subtitle">Báo cáo tổng hợp hoạt động nhập hàng theo khách, xu hướng và khu vực</p>
+    </div>
+    <div class="analysis-pills">
+        <span class="analysis-pill analysis-pill--blue">Khách sỉ: <strong>@Model.TongKhachSi</strong></span>
+        <span class="analysis-pill analysis-pill--green">Khách lẻ: <strong>@Model.TongKhachLe</strong></span>
+        <span class="analysis-pill analysis-pill--amber">Mới tháng này: <strong>@Model.KhachMoiThangNay</strong></span>
+    </div>
+</div>
+
+<div class="analysis-grid">
+
+    <!-- ══ TOP 15 CÀ PHÊ ══════════════════════════════════════════════ -->
+    <div class="analysis-card analysis-card--full">
+        <div class="analysis-card__header"><h2>☕ Top 15 khách hàng nhập cà phê (theo trọng lượng)</h2></div>
+        <div class="analysis-card__body" style="padding:1rem">
+            <canvas id="chartTopCoffee" height="400"></canvas>
+        </div>
+    </div>
+
+    <!-- ══ TOP 15 TIÊU ════════════════════════════════════════════════ -->
+    <div class="analysis-card analysis-card--full">
+        <div class="analysis-card__header"><h2>🫙 Top 15 khách hàng nhập tiêu (theo trọng lượng)</h2></div>
+        <div class="analysis-card__body" style="padding:1rem">
+            <canvas id="chartTopPepper" height="400"></canvas>
+        </div>
+    </div>
+
+    <!-- ══ XU HƯỚNG 12 THÁNG ══════════════════════════════════════════ -->
+    <div class="analysis-card analysis-card--full">
+        <div class="analysis-card__header"><h2>Xu hướng nhập hàng 12 tháng (Cà phê & Tiêu)</h2></div>
+        <div class="analysis-card__body" style="padding:1rem">
+            <canvas id="chartMonthly" height="320"></canvas>
+        </div>
+    </div>
+
+    <!-- ══ PHÂN BỔ KHU VỰC ════════════════════════════════════════════ -->
+    <div class="analysis-card analysis-card--full">
+        <div class="analysis-card__header">
+            <h2>Phân bổ khu vực theo khối lượng nhập</h2>
+            <span style="font-size:.78rem;color:#64748b">Bong bóng càng lớn = khối lượng nhập càng nhiều</span>
+        </div>
+        <div class="analysis-card__body">
+            <div class="region-split">
+                <div class="region-table-side">
+                    <table class="rpt-table">
+                        <thead><tr><th>#</th><th>Khu vực</th><th style="text-align:right">Cà phê (kg)</th><th style="text-align:right">Tiêu (kg)</th><th style="text-align:right">Tổng (kg)</th><th style="text-align:right">Khách</th></tr></thead>
+                        <tbody>
+                            @foreach (var (r, i) in Model.RegionStats.Select((x, i) => (x, i)))
+                            {
+                                <tr>
+                                    <td>@(i + 1)</td>
+                                    <td><strong>@r.KhuVuc</strong></td>
+                                    <td style="text-align:right">@FmtKg(r.TongKgCaPhe)</td>
+                                    <td style="text-align:right">@FmtKg(r.TongKgTieu)</td>
+                                    <td style="text-align:right;font-weight:700">@FmtKg(r.TongKg)</td>
+                                    <td style="text-align:right">@r.SoKhach</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="region-heatmap-side">
+                    <canvas id="chartBubble" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    var coffee = 'rgba(146,64,14,0.75)', pepper = 'rgba(22,101,52,0.75)';
+    var coffeeBg = 'rgba(146,64,14,0.15)', pepperBg = 'rgba(22,101,52,0.15)';
+    var fmtK = function(v) { return v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v; };
+
+    // ── Top 15 Coffee (horizontal bar) ──────────────────────────────
+    @{
+        var cNames = Model.TopCaPhe.Select(c => c.TenKhachHang).Reverse();
+        var cKg = Model.TopCaPhe.Select(c => c.TongKg).Reverse();
+    }
+    new Chart(document.getElementById('chartTopCoffee'), {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(JsonSerializer.Serialize(cNames, jo)),
+            datasets: [{ label: 'Trọng lượng (kg)', data: @Html.Raw(JsonSerializer.Serialize(cKg, jo)), backgroundColor: coffee, borderRadius: 4 }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: fmtK } },
+                y: { grid: { display: false }, ticks: { font: { size: 11, family: 'Inter' } } }
+            }
+        }
+    });
+
+    // ── Top 15 Pepper (horizontal bar) ──────────────────────────────
+    @{
+        var pNames = Model.TopTieu.Select(c => c.TenKhachHang).Reverse();
+        var pKg = Model.TopTieu.Select(c => c.TongKg).Reverse();
+    }
+    new Chart(document.getElementById('chartTopPepper'), {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(JsonSerializer.Serialize(pNames, jo)),
+            datasets: [{ label: 'Trọng lượng (kg)', data: @Html.Raw(JsonSerializer.Serialize(pKg, jo)), backgroundColor: pepper, borderRadius: 4 }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: fmtK } },
+                y: { grid: { display: false }, ticks: { font: { size: 11, family: 'Inter' } } }
+            }
+        }
+    });
+
+    // ── Monthly Column Chart ────────────────────────────────────────
+    @{
+        // Sort chronologically: earliest → latest (left → right)
+        var allTrends = Model.MonthlyCaPhe.Select(m => new { m.Nam, m.Thang, m.Label })
+            .Union(Model.MonthlyTieu.Select(m => new { m.Nam, m.Thang, m.Label }))
+            .Distinct()
+            .OrderBy(t => t.Nam).ThenBy(t => t.Thang)
+            .ToList();
+        var mLabels = allTrends.Select(t => t.Label);
+        var coffeeByLabel = Model.MonthlyCaPhe.ToDictionary(m => m.Label, m => m.TongKg);
+        var pepperByLabel = Model.MonthlyTieu.ToDictionary(m => m.Label, m => m.TongKg);
+        var mCoffee = allTrends.Select(t => coffeeByLabel.GetValueOrDefault(t.Label, 0));
+        var mPepper = allTrends.Select(t => pepperByLabel.GetValueOrDefault(t.Label, 0));
+    }
+    new Chart(document.getElementById('chartMonthly'), {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(JsonSerializer.Serialize(mLabels, jo)),
+            datasets: [
+                { label: 'Cà phê (kg)', data: @Html.Raw(JsonSerializer.Serialize(mCoffee, jo)), backgroundColor: coffee, borderRadius: 6 },
+                { label: 'Tiêu (kg)', data: @Html.Raw(JsonSerializer.Serialize(mPepper, jo)), backgroundColor: pepper, borderRadius: 6 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 13 }, padding: 20 } } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: 'rgba(0,0,0,0.05)' }, beginAtZero: true, ticks: { callback: fmtK } }
+            }
+        }
+    });
+
+    // ── Bubble Chart (Region) ───────────────────────────────────────
+    @{
+        var regions = Model.RegionStats.Where(r => r.KhuVuc != "Khác").ToList();
+        var maxR = regions.Count > 0 ? (double)regions.Max(r => r.TongKg) : 1;
+        // Layout bubbles in a grid pattern
+        var bubbleData = regions.Select((r, i) => new
+        {
+            x = (i % 4) * 25 + 12,
+            y = (i / 4) * 30 + 15,
+            r = Math.Max(8, (int)(Math.Sqrt((double)r.TongKg / maxR) * 50)),
+            label = r.KhuVuc,
+            kg = r.TongKg
+        });
+    }
+    new Chart(document.getElementById('chartBubble'), {
+        type: 'bubble',
+        data: {
+            datasets: [
+                @foreach (var (r, i) in regions.Select((x, i) => (x, i)))
+                {
+                    var radius = Math.Max(8, (int)(Math.Sqrt((double)r.TongKg / maxR) * 45));
+                    var col = i % 2 == 0 ? "rgba(37,99,235," : "rgba(124,58,237,";
+                    var x = (i % 4) * 25 + 12;
+                    var y = (i / 4) * 30 + 18;
+                    @:{label:'@r.KhuVuc — @FmtKg(r.TongKg) kg',data:[{x:@x,y:@y,r:@radius}],backgroundColor:'@(col)0.5)',borderColor:'@(col)0.8)',borderWidth:2},
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return ctx.dataset.label; }
+                    }
+                }
+            },
+            scales: {
+                x: { display: false, min: 0, max: 100 },
+                y: { display: false, min: 0, max: 100 }
+            }
+        },
+        plugins: [{
+            afterDraw: function(chart) {
+                var ctx = chart.ctx;
+                chart.data.datasets.forEach(function(ds, i) {
+                    var meta = chart.getDatasetMeta(i);
+                    meta.data.forEach(function(el) {
+                        var name = ds.label.split(' — ')[0];
+                        ctx.save();
+                        ctx.font = 'bold 11px Inter';
+                        ctx.fillStyle = '#0f172a';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(name, el.x, el.y - 2);
+                        ctx.font = '10px Inter';
+                        ctx.fillStyle = '#64748b';
+                        ctx.fillText(ds.label.split(' — ')[1] || '', el.x, el.y + 12);
+                        ctx.restore();
+                    });
+                });
+            }
+        }]
+    });
+})();
+</script>
+}

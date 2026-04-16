@@ -1,0 +1,156 @@
+@model DuongVanDung.WebApp.Models.Customer.CustomerFinancialViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Báo cáo tài chính";
+    string Fmt(long v)    => v.ToString("#,0", CultureInfo.InvariantCulture);
+    string FmtD(decimal v) => v.ToString("#,0", CultureInfo.InvariantCulture);
+    string FmtKg(decimal v) => v.ToString("#,0.#", CultureInfo.InvariantCulture);
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">Báo cáo</p>
+        <h1>Báo cáo tài chính</h1>
+    </div>
+    <div class="cust-stats-row">
+        <div class="cust-stat-pill cust-stat-pill--blue">
+            <strong>@Fmt(Model.TongChiThangNay)</strong>
+            <span>Chi tháng này (đ)</span>
+        </div>
+        <div class="cust-stat-pill cust-stat-pill--purple">
+            <strong>@Fmt(Model.TongChuyen)</strong>
+            <span>Tổng chuyển khoản (đ)</span>
+        </div>
+        <div class="cust-stat-pill cust-stat-pill--green">
+            <strong>@Model.SoGiaoDich.ToString("#,0")</strong>
+            <span>Giao dịch CK</span>
+        </div>
+    </div>
+</div>
+
+<div class="fin-grid">
+
+    <!-- Top chi cà phê -->
+    <div class="analysis-card analysis-card--half">
+        <div class="analysis-card__header">
+            <h2>Top chi cà phê</h2>
+            <span class="badge badge--coffee">Sỉ — kho DVD</span>
+        </div>
+        <div class="fin-table-wrap">
+            <table class="cust-table cust-table--compact">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Khách hàng</th>
+                        <th class="text-right">Tổng chi (đ)</th>
+                        <th class="text-right">KG</th>
+                        <th class="text-right">Phiếu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.TopChiCaPhe.Count; i++)
+                    {
+                        var r = Model.TopChiCaPhe[i];
+                        <tr>
+                            <td><span class="rank-badge @(i < 3 ? "rank-badge--gold" : "")">@(i+1)</span></td>
+                            <td><strong>@r.TenKhachHang</strong></td>
+                            <td class="text-right num-col num-col--coffee">@Fmt(r.TongTien)</td>
+                            <td class="text-right num-col">@FmtKg(r.TongKg)</td>
+                            <td class="text-right num-col">@r.SoPhieu</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Top chi tiêu -->
+    <div class="analysis-card analysis-card--half">
+        <div class="analysis-card__header">
+            <h2>Top chi tiêu</h2>
+            <span class="badge badge--pepper">Sỉ — kho DVD</span>
+        </div>
+        <div class="fin-table-wrap">
+            <table class="cust-table cust-table--compact">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Khách hàng</th>
+                        <th class="text-right">Tổng chi (đ)</th>
+                        <th class="text-right">KG</th>
+                        <th class="text-right">Phiếu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.TopChiTieu.Count; i++)
+                    {
+                        var r = Model.TopChiTieu[i];
+                        <tr>
+                            <td><span class="rank-badge @(i < 3 ? "rank-badge--gold" : "")">@(i+1)</span></td>
+                            <td><strong>@r.TenKhachHang</strong></td>
+                            <td class="text-right num-col num-col--pepper">@Fmt(r.TongTien)</td>
+                            <td class="text-right num-col">@FmtKg(r.TongKg)</td>
+                            <td class="text-right num-col">@r.SoPhieu</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Chuyển khoản gần nhất -->
+    <div class="analysis-card analysis-card--full">
+        <div class="analysis-card__header">
+            <h2>Chuyển khoản gần nhất</h2>
+            <span class="badge badge--blue">30 giao dịch mới nhất</span>
+        </div>
+        <div class="cust-table-wrap">
+            <table class="cust-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Khách hàng</th>
+                        <th>Loại hàng</th>
+                        <th class="text-right">Số lượng (kg)</th>
+                        <th class="text-right">Thành tiền (đ)</th>
+                        <th>Trạng thái</th>
+                        <th>Người đề nghị</th>
+                        <th>Ngân hàng</th>
+                        <th>Ngày tạo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ck in Model.RecentChuyenKhoan)
+                    {
+                        <tr class="cust-row">
+                            <td class="cust-id">@ck.OrderID</td>
+                            <td><strong>@ck.TenKhachHang</strong></td>
+                            <td>
+                                <span class="loai-badge @(ck.LoaiHang.Contains("phê") || ck.LoaiHang.Contains("Phê") || ck.LoaiHang.Contains("cafe") || ck.LoaiHang.Contains("Cafe") ? "loai-badge--coffee" : "loai-badge--pepper")">
+                                    @ck.LoaiHang
+                                </span>
+                            </td>
+                            <td class="text-right num-col">@FmtKg(ck.SoLuong)</td>
+                            <td class="text-right num-col num-col--blue">@FmtD(ck.ThanhTien)</td>
+                            <td>
+                                <span class="status-badge @StatusClass(ck.TinhTrang)">@ck.TinhTrang</span>
+                            </td>
+                            <td>@ck.NguoiDeNghi</td>
+                            <td>@ck.TenNganHang</td>
+                            <td class="cust-date">@ck.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@functions {
+    static string StatusClass(string s) => s?.ToLower() switch {
+        var x when x != null && x.Contains("hoàn") => "status-badge--green",
+        var x when x != null && x.Contains("đang") => "status-badge--amber",
+        var x when x != null && x.Contains("hủy")  => "status-badge--red",
+        _ => "status-badge--muted"
+    };
+}

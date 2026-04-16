@@ -5,4 +5,5 @@ namespace DuongVanDung.WebApp.Services.Auth;
 public interface ICompanyUserService
 {
     CompanyUserRecord? ValidateCredentials(string username, string password);
+    Task UpdateLastLoginAsync(string username);
 }

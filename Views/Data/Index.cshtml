@@ -1,0 +1,436 @@
+@{
+    ViewData["Title"] = "Dữ liệu kho hàng";
+}
+
+<div class="di-shell">
+
+    <!-- ══ HEADER ═══════════════════════════════════════════════════════════ -->
+    <div class="di-header">
+        <div class="di-header__copy">
+            <p class="eyebrow">Hệ thống</p>
+            <h1>Dữ liệu kho hàng</h1>
+            <p class="di-header__sub">Chọn kho và bảng cần xem. Hỗ trợ lọc theo ngày, khoảng thời gian và xuất Excel.</p>
+        </div>
+        <div class="di-header__hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                <polyline points="13 2 13 9 20 9"/>
+            </svg>
+            <span>Click chuột phải để mở menu nhanh</span>
+        </div>
+    </div>
+
+    <!-- ══ KHO DƯƠNG VĂN DŨNG ═══════════════════════════════════════════════ -->
+    <section class="di-warehouse di-warehouse--blue">
+        <div class="di-warehouse__header">
+            <div class="di-warehouse__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10l9-6 9 6v10h-4v-6H7v6H3z"/>
+                </svg>
+            </div>
+            <div>
+                <h2>Kho Dương Văn Dũng</h2>
+                <p>Kho chính — đầy đủ dữ liệu nhập lẻ, nhập sỉ, xuất hàng</p>
+            </div>
+        </div>
+
+        <div class="di-sections">
+            <!-- Nhập hàng -->
+            <div class="di-section">
+                <div class="di-section__label di-section__label--in">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/>
+                    </svg>
+                    Nhập hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="dvd" asp-route-bang="caphe-le" class="di-tile di-tile--caphe">
+                        <div class="di-tile__icon">☕</div>
+                        <div class="di-tile__body">
+                            <strong>Cà phê lẻ</strong>
+                            <span>Khách hàng mua lẻ tại kho DVD</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--le">Lẻ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="dvd" asp-route-bang="caphe-si" class="di-tile di-tile--caphe">
+                        <div class="di-tile__icon">☕</div>
+                        <div class="di-tile__body">
+                            <strong>Cà phê sỉ</strong>
+                            <span>Khách hàng mua sỉ tại kho DVD</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="dvd" asp-route-bang="tieu-le" class="di-tile di-tile--tieu">
+                        <div class="di-tile__icon">🫙</div>
+                        <div class="di-tile__body">
+                            <strong>Tiêu lẻ</strong>
+                            <span>Khách hàng bán tiêu lẻ tại kho DVD</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--le">Lẻ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="dvd" asp-route-bang="tieu-si" class="di-tile di-tile--tieu">
+                        <div class="di-tile__icon">🫙</div>
+                        <div class="di-tile__body">
+                            <strong>Tiêu sỉ</strong>
+                            <span>Khách hàng bán tiêu sỉ tại kho DVD</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Xuất hàng -->
+            <div class="di-section">
+                <div class="di-section__label di-section__label--out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/>
+                    </svg>
+                    Xuất hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="dvd" asp-route-bang="xuat-caphe" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất cà phê</strong>
+                            <span>Giao hàng / xuất kho cà phê</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="dvd" asp-route-bang="xuat-tieu" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất tiêu</strong>
+                            <span>Giao hàng / xuất kho tiêu</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ KHO THÔNG ĐÀO ════════════════════════════════════════════════════ -->
+    <section class="di-warehouse di-warehouse--red">
+        <div class="di-warehouse__header">
+            <div class="di-warehouse__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10l9-6 9 6v10h-4v-6H7v6H3z"/>
+                </svg>
+            </div>
+            <div>
+                <h2>Kho Thông Đào</h2>
+                <p>Kho vệ tinh — tập trung tiêu sỉ và cà phê theo phát sinh</p>
+            </div>
+        </div>
+
+        <div class="di-sections">
+            <div class="di-section">
+                <div class="di-section__label di-section__label--in">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/>
+                    </svg>
+                    Nhập hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="thongdao" asp-route-bang="caphe" class="di-tile di-tile--caphe">
+                        <div class="di-tile__icon">☕</div>
+                        <div class="di-tile__body">
+                            <strong>Cà phê</strong>
+                            <span>Nhập cà phê tại kho Thông Đào</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="thongdao" asp-route-bang="tieu" class="di-tile di-tile--tieu">
+                        <div class="di-tile__icon">🫙</div>
+                        <div class="di-tile__body">
+                            <strong>Tiêu</strong>
+                            <span>Nhập tiêu tại kho Thông Đào</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="di-section">
+                <div class="di-section__label di-section__label--out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/>
+                    </svg>
+                    Xuất hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="thongdao" asp-route-bang="xuat-caphe" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất cà phê</strong>
+                            <span>Giao hàng / xuất kho cà phê</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="thongdao" asp-route-bang="xuat-tieu" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất tiêu</strong>
+                            <span>Giao hàng / xuất kho tiêu</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ KHO YMOAL ════════════════════════════════════════════════════════ -->
+    <section class="di-warehouse di-warehouse--amber">
+        <div class="di-warehouse__header">
+            <div class="di-warehouse__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10l9-6 9 6v10h-4v-6H7v6H3z"/>
+                </svg>
+            </div>
+            <div>
+                <h2>Kho Ymoal</h2>
+                <p>Kho hỗ trợ — thu mua tiêu và cà phê khu vực vệ tinh</p>
+            </div>
+        </div>
+
+        <div class="di-sections">
+            <div class="di-section">
+                <div class="di-section__label di-section__label--in">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/>
+                    </svg>
+                    Nhập hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="ymoal" asp-route-bang="caphe-le" class="di-tile di-tile--caphe">
+                        <div class="di-tile__icon">☕</div>
+                        <div class="di-tile__body">
+                            <strong>Cà phê lẻ</strong>
+                            <span>Nhập cà phê lẻ tại kho Ymoal</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--le">Lẻ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="ymoal" asp-route-bang="caphe-si" class="di-tile di-tile--caphe">
+                        <div class="di-tile__icon">☕</div>
+                        <div class="di-tile__body">
+                            <strong>Cà phê sỉ</strong>
+                            <span>Nhập cà phê sỉ tại kho Ymoal</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="ymoal" asp-route-bang="tieu-le" class="di-tile di-tile--tieu">
+                        <div class="di-tile__icon">🫙</div>
+                        <div class="di-tile__body">
+                            <strong>Tiêu lẻ</strong>
+                            <span>Nhập tiêu lẻ tại kho Ymoal</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--le">Lẻ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="ymoal" asp-route-bang="tieu-si" class="di-tile di-tile--tieu">
+                        <div class="di-tile__icon">🫙</div>
+                        <div class="di-tile__body">
+                            <strong>Tiêu sỉ</strong>
+                            <span>Nhập tiêu sỉ tại kho Ymoal</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="di-section">
+                <div class="di-section__label di-section__label--out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/>
+                    </svg>
+                    Xuất hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="ymoal" asp-route-bang="xuat-caphe" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất cà phê</strong>
+                            <span>Giao hàng / xuất kho cà phê</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="ymoal" asp-route-bang="xuat-tieu" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất tiêu</strong>
+                            <span>Giao hàng / xuất kho tiêu</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ KHO CƯ JUT ═══════════════════════════════════════════════════════ -->
+    <section class="di-warehouse di-warehouse--purple">
+        <div class="di-warehouse__header">
+            <div class="di-warehouse__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10l9-6 9 6v10h-4v-6H7v6H3z"/>
+                </svg>
+            </div>
+            <div>
+                <h2>Kho Cư Jut</h2>
+                <p>Kho trung chuyển — gom hàng và điều phối theo quy chuẩn</p>
+            </div>
+        </div>
+
+        <div class="di-sections">
+            <div class="di-section">
+                <div class="di-section__label di-section__label--in">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/>
+                    </svg>
+                    Nhập hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="cujut" asp-route-bang="caphe" class="di-tile di-tile--caphe">
+                        <div class="di-tile__icon">☕</div>
+                        <div class="di-tile__body">
+                            <strong>Cà phê</strong>
+                            <span>Nhập cà phê tại kho Cư Jut</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="cujut" asp-route-bang="tieu" class="di-tile di-tile--tieu">
+                        <div class="di-tile__icon">🫙</div>
+                        <div class="di-tile__body">
+                            <strong>Tiêu</strong>
+                            <span>Nhập tiêu tại kho Cư Jut</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="di-section">
+                <div class="di-section__label di-section__label--out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/>
+                    </svg>
+                    Xuất hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="cujut" asp-route-bang="xuat-caphe" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất cà phê</strong>
+                            <span>Giao hàng / xuất kho cà phê</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="cujut" asp-route-bang="xuat-tieu" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất tiêu</strong>
+                            <span>Giao hàng / xuất kho tiêu</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ KHO HÒA PHÚ ══════════════════════════════════════════════════════ -->
+    <section class="di-warehouse di-warehouse--green">
+        <div class="di-warehouse__header">
+            <div class="di-warehouse__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10l9-6 9 6v10h-4v-6H7v6H3z"/>
+                </svg>
+            </div>
+            <div>
+                <h2>Kho Hòa Phú</h2>
+                <p>Kho thu mua cuối tuyến — duy trì lượng hàng ổn định</p>
+            </div>
+        </div>
+
+        <div class="di-sections">
+            <div class="di-section">
+                <div class="di-section__label di-section__label--in">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 4v10m0 0l-4-4m4 4l4-4M5 18h14"/>
+                    </svg>
+                    Nhập hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="hoaphu" asp-route-bang="caphe" class="di-tile di-tile--caphe">
+                        <div class="di-tile__icon">☕</div>
+                        <div class="di-tile__body">
+                            <strong>Cà phê</strong>
+                            <span>Nhập cà phê tại kho Hòa Phú</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="hoaphu" asp-route-bang="tieu" class="di-tile di-tile--tieu">
+                        <div class="di-tile__icon">🫙</div>
+                        <div class="di-tile__body">
+                            <strong>Tiêu</strong>
+                            <span>Nhập tiêu tại kho Hòa Phú</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--si">Sỉ</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="di-section">
+                <div class="di-section__label di-section__label--out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20V10m0 0l-4 4m4-4l4 4M5 4h14"/>
+                    </svg>
+                    Xuất hàng
+                </div>
+                <div class="di-tiles">
+                    <a asp-action="Table" asp-route-kho="hoaphu" asp-route-bang="xuat-caphe" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất cà phê</strong>
+                            <span>Giao hàng / xuất kho cà phê</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    <a asp-action="Table" asp-route-kho="hoaphu" asp-route-bang="xuat-tieu" class="di-tile di-tile--xuat">
+                        <div class="di-tile__icon">📤</div>
+                        <div class="di-tile__body">
+                            <strong>Xuất tiêu</strong>
+                            <span>Giao hàng / xuất kho tiêu</span>
+                        </div>
+                        <span class="di-tile__tag di-tile__tag--xuat">Xuất</span>
+                        <svg class="di-tile__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>

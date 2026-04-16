@@ -27,6 +27,36 @@
         return value.ToString("#,0.##", CultureInfo.InvariantCulture);
     }
 
+    private static string NormalizeKey(string value)
+    {
+        return (value ?? string.Empty).Trim().ToLowerInvariant();
+    }
+
+    private static string GetWarehouseColor(string warehouseName)
+    {
+        return NormalizeKey(warehouseName) switch
+        {
+            "dương văn dũng" or "dvd" => "#2563eb",
+            "thông đào" => "#dc2626",
+            "ymoal" => "#eab308",
+            "cư jut" => "#7c3aed",
+            "hòa phú" => "#16a34a",
+            _ => "#64748b"
+        };
+    }
+
+    private static string GetWarehouseAccentClass(int index)
+    {
+        return index switch
+        {
+            0 => "blue",
+            1 => "red",
+            2 => "yellow",
+            3 => "purple",
+            _ => "green"
+        };
+    }
+
     private static string RenderLinePath(IReadOnlyList<double> values, double maxValue, double width, double height)
     {
         if (values.Count == 0)
@@ -47,22 +77,6 @@
         return string.Join(" ", points);
     }
 
-    private static string RenderBarSegments(IReadOnlyList<double> values, double maxValue, double chartHeight, double barWidth, double gap, double offset)
-    {
-        var segments = new List<string>();
-
-        for (var i = 0; i < values.Count; i++)
-        {
-            var value = values[i];
-            var height = maxValue == 0 ? 0 : Math.Abs(value / maxValue) * chartHeight;
-            var x = offset + (i * gap);
-            var y = value >= 0 ? chartHeight - height : chartHeight;
-            segments.Add($"<rect x='{x:0.##}' y='{y:0.##}' width='{barWidth:0.##}' height='{height:0.##}' rx='7'></rect>");
-        }
-
-        return string.Join(string.Empty, segments);
-    }
-
     private static string RenderDonutSegments(IReadOnlyList<DashboardChartPoint> points)
     {
         var total = points.Sum(x => x.Value);
@@ -71,7 +85,7 @@
             return string.Empty;
         }
 
-        const double radius = 52;
+        const double radius = 82;
         var circumference = 2 * Math.PI * radius;
         var offset = 0d;
         var segments = new List<string>();
@@ -79,7 +93,8 @@
         foreach (var point in points)
         {
             var length = circumference * (point.Value / total);
-            segments.Add($"<circle cx='70' cy='70' r='{radius}' fill='none' stroke='{point.Color}' stroke-width='20' stroke-dasharray='{length:0.##} {circumference:0.##}' stroke-dashoffset='{-offset:0.##}' transform='rotate(-90 70 70)'></circle>");
+            var color = GetWarehouseColor(point.Label);
+            segments.Add($"<circle cx='110' cy='110' r='{radius}' fill='none' stroke='{color}' stroke-width='28' stroke-dasharray='{length:0.##} {circumference:0.##}' stroke-dashoffset='{-offset:0.##}' transform='rotate(-90 110 110)'></circle>");
             offset += length;
         }
 
@@ -156,7 +171,6 @@
                         </span>
                         <span class="dashboard-menu__copy">
                             <strong>@item.Title</strong>
-                            <small>@item.Description</small>
                         </span>
                     </a>
                 }
@@ -177,9 +191,6 @@
                     <article class="commodity-summary-card commodity-summary-card--@commodity.Theme">
                         <div class="commodity-summary-card__header">
                             <div class="product-panel__title">
-                                <span class="metric-icon metric-icon--@commodity.Theme">
-                                    @RenderIcon(commodity.Theme)
-                                </span>
                                 <div>
                                     <h3>@commodity.Name</h3>
                                     <p>Thông tin tổng hợp theo mặt hàng</p>
@@ -190,12 +201,12 @@
                         <div class="inventory-summary-grid">
                             @foreach (var summary in commodity.Metrics)
                             {
+                                var summaryLabel = summary.Icon == "retail"
+                                    ? (commodity.Theme == "coffee" ? "Mua cà phê" : "Mua tiêu")
+                                    : summary.Label;
                                 <article class="inventory-summary-card">
-                                    <div class="metric-icon metric-icon--summary metric-icon--@summary.Icon">
-                                        @RenderIcon(summary.Icon)
-                                    </div>
                                     <div>
-                                        <p>@summary.Label</p>
+                                        <p>@summaryLabel</p>
                                         <h3>@summary.Value</h3>
                                     </div>
                                 </article>
@@ -209,170 +220,189 @@
         @if (Model.ChartSection is not null)
         {
             var chart = Model.ChartSection;
-            var lineMax = Math.Max(1, chart.InboundSeries.SelectMany(x => x.Values).DefaultIfEmpty(0).Max());
-            var inventoryTotal = chart.InventoryShare.Sum(x => x.Value);
-            var groupedBarMax = Math.Max(1, chart.StandardSeries.SelectMany(x => x.Values).Select(Math.Abs).DefaultIfEmpty(0).Max());
-            var financeBarMax = Math.Max(1, chart.FinanceSeries.SelectMany(x => x.Values).DefaultIfEmpty(0).Max());
+            var coffeeTotal = chart.CoffeeShare.Sum(x => x.Value);
+            var pepperTotal = chart.PepperShare.Sum(x => x.Value);
+            var coffeeMax = Math.Max(1, chart.CoffeeDailySeries.SelectMany(x => x.Values).DefaultIfEmpty(0).Max());
+            var pepperMax = Math.Max(1, chart.PepperDailySeries.SelectMany(x => x.Values).DefaultIfEmpty(0).Max());
             const double lineWidth = 300;
             const double lineHeight = 130;
-            const double groupedGap = 54;
-            const double barWidth = 16;
 
             <section class="chart-board">
                 <div class="chart-board__header">
                     <div>
                         <p class="eyebrow">Biểu đồ & phân tích</p>
-                        <h2>Biểu đồ mô tả tình hình kho trong tháng này</h2>
+                        <h2>Tỷ trọng theo mặt hàng và lượng nhập hằng ngày theo kho</h2>
                     </div>
                 </div>
 
-                <div class="chart-grid">
-                    <article class="chart-card">
-                        <div class="chart-card__header">
-                            <h3>Lượng nhập hàng trong tháng</h3>
-                            <span>Line chart</span>
-                        </div>
-                        <svg class="chart-svg chart-svg--line" viewBox="0 0 340 180" role="img" aria-label="Biểu đồ lượng nhập hàng của cà phê và tiêu trong tháng này">
-                            <g transform="translate(20,16)">
-                                <line x1="0" y1="130" x2="300" y2="130" class="chart-axis"></line>
-                                <line x1="0" y1="0" x2="0" y2="130" class="chart-axis"></line>
-                                @for (var i = 0; i < 4; i++)
-                                {
-                                    var y = i * 32.5;
-                                    var labelValue = lineMax - ((lineMax / 4) * i);
-                                    <g>
-                                        <line x1="0" y1="@y.ToString("0.##", CultureInfo.InvariantCulture)" x2="300" y2="@y.ToString("0.##", CultureInfo.InvariantCulture)" class="chart-gridline"></line>
-                                        <text x="-8" y="@(y + 4).ToString("0.##", CultureInfo.InvariantCulture)" class="chart-label chart-label--y">@FormatCompact(labelValue)</text>
-                                    </g>
-                                }
-                                @foreach (var series in chart.InboundSeries)
-                                {
-                                    <polyline points="@RenderLinePath(series.Values.ToArray(), lineMax, lineWidth, lineHeight)" fill="none" stroke="@series.Color" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                                    @for (var i = 0; i < series.Values.Count; i++)
+                <div class="chart-stack">
+                    <div class="chart-row">
+                        <article class="chart-card chart-card--line chart-card--coffee">
+                            <div class="chart-card__header">
+                                <h3>Nhập cà phê hằng ngày theo kho</h3>
+                                <span>Line chart</span>
+                            </div>
+                            <svg class="chart-svg chart-svg--line" viewBox="0 0 340 180" role="img" aria-label="Biểu đồ nhập cà phê hằng ngày theo kho">
+                                <g transform="translate(20,16)">
+                                    <line x1="0" y1="130" x2="300" y2="130" class="chart-axis"></line>
+                                    <line x1="0" y1="0" x2="0" y2="130" class="chart-axis"></line>
+                                    @for (var i = 0; i < 4; i++)
                                     {
-                                        var x = chart.InboundLabels.Count > 1 ? i * (lineWidth / (chart.InboundLabels.Count - 1)) : 0;
-                                        var y = lineHeight - ((series.Values.ElementAt(i) / lineMax) * lineHeight);
-                                        <circle cx="@x.ToString("0.##", CultureInfo.InvariantCulture)" cy="@y.ToString("0.##", CultureInfo.InvariantCulture)" r="4" fill="@series.Color"></circle>
+                                        var y = i * 32.5;
+                                        var labelValue = coffeeMax - ((coffeeMax / 4) * i);
+                                        <g>
+                                            <line x1="0" y1="@y.ToString("0.##", CultureInfo.InvariantCulture)" x2="300" y2="@y.ToString("0.##", CultureInfo.InvariantCulture)" class="chart-gridline"></line>
+                                            <text x="-8" y="@(y + 4).ToString("0.##", CultureInfo.InvariantCulture)" class="chart-label chart-label--y">@FormatCompact(labelValue)</text>
+                                        </g>
                                     }
-                                }
-                                @for (var i = 0; i < chart.InboundLabels.Count; i++)
-                                {
-                                    var x = chart.InboundLabels.Count > 1 ? i * (lineWidth / (chart.InboundLabels.Count - 1)) : 0;
-                                    @Html.Raw($"<text x='{x.ToString("0.##", CultureInfo.InvariantCulture)}' y='152' class='chart-label chart-label--x'>{chart.InboundLabels.ElementAt(i)}</text>")
-                                }
-                            </g>
-                        </svg>
-                        <div class="chart-legend">
-                            @foreach (var series in chart.InboundSeries)
-                            {
-                                <div class="chart-legend__item">
-                                    <span class="chart-dot" style="--chart-color:@series.Color"></span>
-                                    <strong>@series.Name</strong>
-                                    <small>@FormatNumber(series.Values.Sum()) kg</small>
-                                </div>
-                            }
-                        </div>
-                    </article>
-
-                    <article class="chart-card">
-                        <div class="chart-card__header">
-                            <h3>Tỷ trọng tổng lượng hàng theo kho</h3>
-                            <span>Pie chart</span>
-                        </div>
-                        <div class="chart-donut-layout">
-                            <svg class="chart-svg chart-svg--donut" viewBox="0 0 140 140" role="img" aria-label="Pie chart tỷ trọng tổng lượng hàng theo kho">
-                                @Html.Raw(RenderDonutSegments(chart.InventoryShare.ToArray()))
-                                <circle cx="70" cy="70" r="35" fill="#fffaf0"></circle>
-                                <text x="70" y="65" text-anchor="middle" class="chart-donut__value">@FormatCompact(inventoryTotal)</text>
-                                <text x="70" y="82" text-anchor="middle" class="chart-donut__label">kg</text>
+                                    @foreach (var series in chart.CoffeeDailySeries)
+                                    {
+                                        var seriesColor = GetWarehouseColor(series.Name);
+                                        <polyline points="@RenderLinePath(series.Values.ToArray(), coffeeMax, lineWidth, lineHeight)" fill="none" stroke="@seriesColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" opacity="0.96"></polyline>
+                                        @for (var i = 0; i < series.Values.Count; i++)
+                                        {
+                                            var x = chart.DailyLabels.Count > 1 ? i * (lineWidth / (chart.DailyLabels.Count - 1)) : 0;
+                                            var y = lineHeight - ((series.Values.ElementAt(i) / coffeeMax) * lineHeight);
+                                            <circle cx="@x.ToString("0.##", CultureInfo.InvariantCulture)" cy="@y.ToString("0.##", CultureInfo.InvariantCulture)" r="2.7" fill="@seriesColor"></circle>
+                                        }
+                                    }
+                                    @for (var i = 0; i < chart.DailyLabels.Count; i++)
+                                    {
+                                        var x = chart.DailyLabels.Count > 1 ? i * (lineWidth / (chart.DailyLabels.Count - 1)) : 0;
+                                        @Html.Raw($"<text x='{x.ToString("0.##", CultureInfo.InvariantCulture)}' y='152' class='chart-label chart-label--x'>{chart.DailyLabels.ElementAt(i)}</text>")
+                                    }
+                                </g>
                             </svg>
-                            <div class="chart-legend chart-legend--stacked">
-                                @foreach (var point in chart.InventoryShare)
+                            <div class="chart-legend">
+                                @foreach (var series in chart.CoffeeDailySeries)
                                 {
-                                    var percent = inventoryTotal == 0 ? 0 : (point.Value / inventoryTotal) * 100;
+                                    var seriesColor = GetWarehouseColor(series.Name);
                                     <div class="chart-legend__item">
-                                        <span class="chart-dot" style="--chart-color:@point.Color"></span>
-                                        <strong>@point.Label</strong>
-                                        <small>@percent.ToString("0.#", CultureInfo.InvariantCulture)%</small>
+                                        <span class="chart-dot" style="--chart-color:@seriesColor"></span>
+                                        <strong>@series.Name</strong>
+                                        <small>@FormatNumber(series.Values.Sum()) kg</small>
                                     </div>
                                 }
                             </div>
-                        </div>
-                    </article>
+                        </article>
 
-                    <article class="chart-card">
-                        <div class="chart-card__header">
-                            <h3>So sánh quy chuẩn theo kho</h3>
-                            <span>Bar chart</span>
-                        </div>
-                        <svg class="chart-svg chart-svg--bar" viewBox="0 0 340 220" role="img" aria-label="Biểu đồ so sánh quy chuẩn cà phê và tiêu theo kho">
-                            <g transform="translate(24,18)">
-                                <line x1="0" y1="150" x2="290" y2="150" class="chart-axis"></line>
-                                @for (var i = 0; i < chart.StandardSeries.Count; i++)
-                                {
-                                    var series = chart.StandardSeries.ElementAt(i);
-                                    <g fill="@series.Color">
-                                        @Html.Raw(RenderBarSegments(series.Values.ToArray(), groupedBarMax, 140, barWidth, groupedGap, i == 0 ? 8 : 28))
-                                    </g>
-                                }
-                                @for (var i = 0; i < chart.WarehouseLabels.Count; i++)
-                                {
-                                    var x = 24 + (i * groupedGap);
-                                    @Html.Raw($"<text x='{x.ToString("0.##", CultureInfo.InvariantCulture)}' y='172' class='chart-label chart-label--x'>{chart.WarehouseLabels.ElementAt(i)}</text>")
-                                }
-                            </g>
-                        </svg>
-                        <div class="chart-legend">
-                            @foreach (var series in chart.StandardSeries)
-                            {
-                                <div class="chart-legend__item">
-                                    <span class="chart-dot" style="--chart-color:@series.Color"></span>
-                                    <strong>@series.Name</strong>
+                        <article class="chart-card chart-card--pie">
+                            <div class="chart-card__header">
+                                <h3>Tỷ trọng cà phê theo kho</h3>
+                                <span>Pie chart</span>
+                            </div>
+                            <div class="chart-donut-layout">
+                                <svg class="chart-svg chart-svg--donut" viewBox="0 0 220 220" role="img" aria-label="Pie chart tỷ trọng cà phê theo kho">
+                                    <circle cx="110" cy="110" r="82" fill="none" stroke="rgba(143, 71, 40, 0.08)" stroke-width="28"></circle>
+                                    @Html.Raw(RenderDonutSegments(chart.CoffeeShare.ToArray()))
+                                    <circle cx="110" cy="110" r="52" fill="#fffaf0"></circle>
+                                    <text x="110" y="105" text-anchor="middle" class="chart-donut__value">@FormatCompact(coffeeTotal)</text>
+                                    <text x="110" y="126" text-anchor="middle" class="chart-donut__label">kg cà phê</text>
+                                </svg>
+                                <div class="chart-legend chart-legend--stacked">
+                                    @foreach (var point in chart.CoffeeShare)
+                                    {
+                                        var percent = coffeeTotal == 0 ? 0 : (point.Value / coffeeTotal) * 100;
+                                        var pointColor = GetWarehouseColor(point.Label);
+                                        <div class="chart-legend__item">
+                                            <span class="chart-dot" style="--chart-color:@pointColor"></span>
+                                            <strong>@point.Label</strong>
+                                            <small>@percent.ToString("0.#", CultureInfo.InvariantCulture)% - @FormatCompact(point.Value) kg</small>
+                                        </div>
+                                    }
                                 </div>
-                            }
-                        </div>
-                    </article>
+                            </div>
+                        </article>
+                    </div>
 
-                    <article class="chart-card">
-                        <div class="chart-card__header">
-                            <h3>Chi phí và nợ theo kho</h3>
-                            <span>Column chart</span>
-                        </div>
-                        <svg class="chart-svg chart-svg--bar" viewBox="0 0 340 220" role="img" aria-label="Biểu đồ chi phí và nợ theo kho">
-                            <g transform="translate(24,18)">
-                                <line x1="0" y1="150" x2="290" y2="150" class="chart-axis"></line>
-                                @for (var i = 0; i < chart.FinanceSeries.Count; i++)
+                    <div class="chart-row">
+                        <article class="chart-card chart-card--line chart-card--pepper">
+                            <div class="chart-card__header">
+                                <h3>Nhập tiêu hằng ngày theo kho</h3>
+                                <span>Line chart</span>
+                            </div>
+                            <svg class="chart-svg chart-svg--line" viewBox="0 0 340 180" role="img" aria-label="Biểu đồ nhập tiêu hằng ngày theo kho">
+                                <g transform="translate(20,16)">
+                                    <line x1="0" y1="130" x2="300" y2="130" class="chart-axis"></line>
+                                    <line x1="0" y1="0" x2="0" y2="130" class="chart-axis"></line>
+                                    @for (var i = 0; i < 4; i++)
+                                    {
+                                        var y = i * 32.5;
+                                        var labelValue = pepperMax - ((pepperMax / 4) * i);
+                                        <g>
+                                            <line x1="0" y1="@y.ToString("0.##", CultureInfo.InvariantCulture)" x2="300" y2="@y.ToString("0.##", CultureInfo.InvariantCulture)" class="chart-gridline"></line>
+                                            <text x="-8" y="@(y + 4).ToString("0.##", CultureInfo.InvariantCulture)" class="chart-label chart-label--y">@FormatCompact(labelValue)</text>
+                                        </g>
+                                    }
+                                    @foreach (var series in chart.PepperDailySeries)
+                                    {
+                                        var seriesColor = GetWarehouseColor(series.Name);
+                                        <polyline points="@RenderLinePath(series.Values.ToArray(), pepperMax, lineWidth, lineHeight)" fill="none" stroke="@seriesColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" opacity="0.96"></polyline>
+                                        @for (var i = 0; i < series.Values.Count; i++)
+                                        {
+                                            var x = chart.DailyLabels.Count > 1 ? i * (lineWidth / (chart.DailyLabels.Count - 1)) : 0;
+                                            var y = lineHeight - ((series.Values.ElementAt(i) / pepperMax) * lineHeight);
+                                            <circle cx="@x.ToString("0.##", CultureInfo.InvariantCulture)" cy="@y.ToString("0.##", CultureInfo.InvariantCulture)" r="2.7" fill="@seriesColor"></circle>
+                                        }
+                                    }
+                                    @for (var i = 0; i < chart.DailyLabels.Count; i++)
+                                    {
+                                        var x = chart.DailyLabels.Count > 1 ? i * (lineWidth / (chart.DailyLabels.Count - 1)) : 0;
+                                        @Html.Raw($"<text x='{x.ToString("0.##", CultureInfo.InvariantCulture)}' y='152' class='chart-label chart-label--x'>{chart.DailyLabels.ElementAt(i)}</text>")
+                                    }
+                                </g>
+                            </svg>
+                            <div class="chart-legend">
+                                @foreach (var series in chart.PepperDailySeries)
                                 {
-                                    var series = chart.FinanceSeries.ElementAt(i);
-                                    <g fill="@series.Color">
-                                        @Html.Raw(RenderBarSegments(series.Values.ToArray(), financeBarMax, 140, barWidth, groupedGap, i == 0 ? 8 : 28))
-                                    </g>
+                                    var seriesColor = GetWarehouseColor(series.Name);
+                                    <div class="chart-legend__item">
+                                        <span class="chart-dot" style="--chart-color:@seriesColor"></span>
+                                        <strong>@series.Name</strong>
+                                        <small>@FormatNumber(series.Values.Sum()) kg</small>
+                                    </div>
                                 }
-                                @for (var i = 0; i < chart.WarehouseLabels.Count; i++)
-                                {
-                                    var x = 24 + (i * groupedGap);
-                                    @Html.Raw($"<text x='{x.ToString("0.##", CultureInfo.InvariantCulture)}' y='172' class='chart-label chart-label--x'>{chart.WarehouseLabels.ElementAt(i)}</text>")
-                                }
-                            </g>
-                        </svg>
-                        <div class="chart-legend">
-                            @foreach (var series in chart.FinanceSeries)
-                            {
-                                <div class="chart-legend__item">
-                                    <span class="chart-dot" style="--chart-color:@series.Color"></span>
-                                    <strong>@series.Name</strong>
+                            </div>
+                        </article>
+
+                        <article class="chart-card chart-card--pie chart-card--pepper">
+                            <div class="chart-card__header">
+                                <h3>Tỷ trọng tiêu theo kho</h3>
+                                <span>Pie chart</span>
+                            </div>
+                            <div class="chart-donut-layout">
+                                <svg class="chart-svg chart-svg--donut" viewBox="0 0 220 220" role="img" aria-label="Pie chart tỷ trọng tiêu theo kho">
+                                    <circle cx="110" cy="110" r="82" fill="none" stroke="rgba(49, 95, 65, 0.08)" stroke-width="28"></circle>
+                                    @Html.Raw(RenderDonutSegments(chart.PepperShare.ToArray()))
+                                    <circle cx="110" cy="110" r="52" fill="#fffaf0"></circle>
+                                    <text x="110" y="105" text-anchor="middle" class="chart-donut__value">@FormatCompact(pepperTotal)</text>
+                                    <text x="110" y="126" text-anchor="middle" class="chart-donut__label">kg tiêu</text>
+                                </svg>
+                                <div class="chart-legend chart-legend--stacked">
+                                    @foreach (var point in chart.PepperShare)
+                                    {
+                                        var percent = pepperTotal == 0 ? 0 : (point.Value / pepperTotal) * 100;
+                                        var pointColor = GetWarehouseColor(point.Label);
+                                        <div class="chart-legend__item">
+                                            <span class="chart-dot" style="--chart-color:@pointColor"></span>
+                                            <strong>@point.Label</strong>
+                                            <small>@percent.ToString("0.#", CultureInfo.InvariantCulture)% - @FormatCompact(point.Value) kg</small>
+                                        </div>
+                                    }
                                 </div>
-                            }
-                        </div>
-                    </article>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             </section>
         }
 
         <section class="warehouse-grid">
-            @foreach (var warehouse in Model.Warehouses)
+            @for (var warehouseIndex = 0; warehouseIndex < Model.Warehouses.Count; warehouseIndex++)
             {
-                <article class="warehouse-card">
+                var warehouse = Model.Warehouses.ElementAt(warehouseIndex);
+                var warehouseAccent = GetWarehouseAccentClass(warehouseIndex);
+                <article class="warehouse-card warehouse-card--@warehouseAccent">
                     <div class="warehouse-card__header">
                         <div>
                             <p class="eyebrow">Khu vực kho</p>
@@ -387,9 +417,6 @@
                             <section class="product-panel product-panel--@product.Theme">
                                 <div class="product-panel__header">
                                     <div class="product-panel__title">
-                                        <span class="metric-icon metric-icon--@product.Theme">
-                                            @RenderIcon(product.Theme)
-                                        </span>
                                         <div>
                                             <h3>@product.Name</h3>
                                             <p>Số liệu hiện tại tại kho</p>
@@ -397,19 +424,18 @@
                                     </div>
                                 </div>
 
-                                <div class="metric-grid">
-                                    @foreach (var metric in product.Metrics)
-                                    {
-                                        <div class="metric-tile">
-                                            <span class="metric-icon metric-icon--tile metric-icon--@metric.Icon">
-                                                @RenderIcon(metric.Icon)
-                                            </span>
-                                            <div class="metric-tile__copy">
-                                                <span>@metric.Label</span>
-                                                <strong>@metric.Value <small>@metric.Unit</small></strong>
+                                <div class="metric-board">
+                                    <div class="metric-grid">
+                                        @foreach (var metric in product.Metrics)
+                                        {
+                                            <div class="metric-tile">
+                                                <div class="metric-tile__copy">
+                                                    <span>@metric.Label</span>
+                                                    <strong>@metric.Value <small>@metric.Unit</small></strong>
+                                                </div>
                                             </div>
-                                        </div>
-                                    }
+                                        }
+                                    </div>
                                 </div>
                             </section>
                         }
@@ -420,9 +446,6 @@
                         {
                             <article class="finance-card finance-card--@financeCard.Accent finance-card--warehouse">
                                 <div class="finance-card__header">
-                                    <span class="metric-icon metric-icon--finance">
-                                        @RenderIcon(financeCard.Icon)
-                                    </span>
                                     <h3>@financeCard.Title</h3>
                                 </div>
 
@@ -448,9 +471,6 @@
                 {
                     <article class="finance-card finance-card--@financeCard.Accent">
                         <div class="finance-card__header">
-                            <span class="metric-icon metric-icon--finance">
-                                @RenderIcon(financeCard.Icon)
-                            </span>
                             <h3>@financeCard.Title</h3>
                         </div>
 
@@ -469,9 +489,6 @@
 
             <aside class="price-card">
                 <div class="finance-card__header">
-                    <span class="metric-icon metric-icon--price">
-                        @RenderIcon("price")
-                    </span>
                     <h3>Giá sản phẩm</h3>
                 </div>
 

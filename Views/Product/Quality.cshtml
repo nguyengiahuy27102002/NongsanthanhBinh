@@ -1,0 +1,198 @@
+@model DuongVanDung.WebApp.Models.Product.QualityViewModel
+@{
+    ViewData["Title"] = "Chất lượng hàng hóa";
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">Báo cáo sản phẩm</p>
+        <h1>Chất lượng hàng hóa</h1>
+        <p class="cust-subtitle">Phân tích độ ẩm và tạp chất theo nhà cung cấp</p>
+    </div>
+</div>
+
+<!-- ── KPI trung bình ─────────────────────────────────────────── -->
+<div class="prod-kpi-row" style="grid-template-columns:1fr 1fr">
+    <div class="prod-kpi prod-kpi--caphe">
+        <div class="prod-kpi__title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
+                <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/>
+            </svg>
+            Cà phê — Trung bình toàn hệ thống
+        </div>
+        <div class="prod-kpi__stats">
+            <div class="prod-kpi__stat">
+                <span>Độ ẩm TB</span>
+                <strong>@Model.AvgDoAmCaPhe.ToString("0.##")%</strong>
+            </div>
+            <div class="prod-kpi__stat">
+                <span>Tạp chất TB</span>
+                <strong>@Model.AvgTapChatCaPhe.ToString("0.##")%</strong>
+            </div>
+        </div>
+    </div>
+    <div class="prod-kpi prod-kpi--tieu">
+        <div class="prod-kpi__title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/>
+                <path d="M7 20.662V19a2 2 0 012-2h6a2 2 0 012 2v1.662"/>
+            </svg>
+            Tiêu — Trung bình toàn hệ thống
+        </div>
+        <div class="prod-kpi__stats">
+            <div class="prod-kpi__stat">
+                <span>Độ ẩm TB</span>
+                <strong>@Model.AvgDoAmTieu.ToString("0.##")%</strong>
+            </div>
+            <div class="prod-kpi__stat">
+                <span>Tạp chất TB</span>
+                <strong>@Model.AvgTapChatTieu.ToString("0.##")%</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Bảng cà phê ────────────────────────────────────────────── -->
+<div class="analysis-card analysis-card--full" style="margin-bottom:1rem">
+    <div class="analysis-card-header">
+        <span class="sp-badge sp-badge--caphe">Cà phê</span>
+        <h3 style="margin:0;font-size:1rem;font-weight:700">Chất lượng theo nhà cung cấp</h3>
+    </div>
+    @if (Model.CaPhe.Count > 0)
+    {
+        <div class="cust-table-wrap" style="margin-top:.75rem">
+            <table class="cust-table">
+                <thead>
+                    <tr>
+                        <th class="col-stt">STT</th>
+                        <th>Nhà cung cấp</th>
+                        <th>Kho</th>
+                        <th style="text-align:right">Tổng KL (kg)</th>
+                        <th style="text-align:right">Số phiếu</th>
+                        <th style="text-align:center">Độ ẩm TB</th>
+                        <th style="text-align:center">Tạp chất TB</th>
+                        <th style="text-align:center">Đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int stt = 1; }
+                    @foreach (var r in Model.CaPhe)
+                    {
+                        var doAmOk    = r.AvgDoAm < 14;
+                        var tapChatOk = r.AvgTapChat < 1;
+                        <tr class="cust-row">
+                            <td class="col-stt"><span class="stt-num">@stt</span></td>
+                            <td><strong>@r.TenKhachHang</strong></td>
+                            <td><span class="kho-badge kho-badge--@KhoBadgeKey(r.Kho)">@r.Kho</span></td>
+                            <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">@r.TongKg.ToString("#,0.##")</td>
+                            <td style="text-align:right">@r.SoPhieu</td>
+                            <td style="text-align:center">
+                                <span class="quality-val @(doAmOk?"quality-val--ok":"quality-val--warn")">
+                                    @r.AvgDoAm.ToString("0.#")%
+                                </span>
+                            </td>
+                            <td style="text-align:center">
+                                <span class="quality-val @(tapChatOk?"quality-val--ok":"quality-val--warn")">
+                                    @r.AvgTapChat.ToString("0.##")%
+                                </span>
+                            </td>
+                            <td style="text-align:center">
+                                @if (doAmOk && tapChatOk)
+                                {
+                                    <span class="quality-badge quality-badge--good">Tốt</span>
+                                }
+                                else if (!doAmOk && !tapChatOk)
+                                {
+                                    <span class="quality-badge quality-badge--bad">Kém</span>
+                                }
+                                else
+                                {
+                                    <span class="quality-badge quality-badge--mid">TB</span>
+                                }
+                            </td>
+                        </tr>
+                        stt++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="table-empty" style="padding:2rem">
+            <p>Không có dữ liệu chất lượng (cần cột DoAm, TapChat trong bảng nhập)</p>
+        </div>
+    }
+</div>
+
+<!-- ── Bảng tiêu ──────────────────────────────────────────────── -->
+<div class="analysis-card analysis-card--full">
+    <div class="analysis-card-header">
+        <span class="sp-badge sp-badge--tieu">Tiêu</span>
+        <h3 style="margin:0;font-size:1rem;font-weight:700">Chất lượng theo nhà cung cấp</h3>
+    </div>
+    @if (Model.Tieu.Count > 0)
+    {
+        <div class="cust-table-wrap" style="margin-top:.75rem">
+            <table class="cust-table">
+                <thead>
+                    <tr>
+                        <th class="col-stt">STT</th>
+                        <th>Nhà cung cấp</th>
+                        <th>Kho</th>
+                        <th style="text-align:right">Tổng KL (kg)</th>
+                        <th style="text-align:right">Số phiếu</th>
+                        <th style="text-align:center">Độ ẩm TB</th>
+                        <th style="text-align:center">Tạp chất TB</th>
+                        <th style="text-align:center">Đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int sttT = 1; }
+                    @foreach (var r in Model.Tieu)
+                    {
+                        var doAmOk    = r.AvgDoAm < 13;
+                        var tapChatOk = r.AvgTapChat < 0.5m;
+                        <tr class="cust-row">
+                            <td class="col-stt"><span class="stt-num">@sttT</span></td>
+                            <td><strong>@r.TenKhachHang</strong></td>
+                            <td><span class="kho-badge kho-badge--@KhoBadgeKey(r.Kho)">@r.Kho</span></td>
+                            <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">@r.TongKg.ToString("#,0.##")</td>
+                            <td style="text-align:right">@r.SoPhieu</td>
+                            <td style="text-align:center">
+                                <span class="quality-val @(doAmOk?"quality-val--ok":"quality-val--warn")">@r.AvgDoAm.ToString("0.#")%</span>
+                            </td>
+                            <td style="text-align:center">
+                                <span class="quality-val @(tapChatOk?"quality-val--ok":"quality-val--warn")">@r.AvgTapChat.ToString("0.##")%</span>
+                            </td>
+                            <td style="text-align:center">
+                                @if (doAmOk && tapChatOk)
+                                { <span class="quality-badge quality-badge--good">Tốt</span> }
+                                else if (!doAmOk && !tapChatOk)
+                                { <span class="quality-badge quality-badge--bad">Kém</span> }
+                                else
+                                { <span class="quality-badge quality-badge--mid">TB</span> }
+                            </td>
+                        </tr>
+                        sttT++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="table-empty" style="padding:2rem">
+            <p>Không có dữ liệu chất lượng (cần cột DoAm, TapChat trong bảng nhập)</p>
+        </div>
+    }
+</div>
+
+@functions {
+    static string KhoBadgeKey(string kho) => kho switch {
+        "Dương Văn Dũng" => "dvd",
+        "Thông Đào"      => "thongdao",
+        "Ymoal"          => "ymoal",
+        _                => "other"
+    };
+}

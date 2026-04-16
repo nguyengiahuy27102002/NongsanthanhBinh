@@ -1,0 +1,128 @@
+@model DuongVanDung.WebApp.Models.Customer.CustomerSearchViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Tìm khách hàng";
+    string Fmt(long v) => v.ToString("#,0", CultureInfo.InvariantCulture);
+}
+
+<div class="cust-page-header">
+    <div>
+        <p class="eyebrow">Quản lý khách hàng</p>
+        <h1>Tìm khách hàng</h1>
+    </div>
+</div>
+
+<div class="search-hero-card">
+    <form method="get" asp-action="Search">
+        <div class="search-hero-grid">
+            <div class="search-field-group">
+                <label>Từ khóa tìm kiếm</label>
+                <div class="cust-search-wrap">
+                    <svg class="cust-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <input type="text" name="keyword" value="@Model.Keyword"
+                           placeholder="Nhập tên, SĐT, CCCD hoặc địa chỉ..."
+                           class="cust-search-input cust-search-input--large" autofocus />
+                </div>
+            </div>
+            <div class="search-by-group">
+                <label>Tìm theo</label>
+                <div class="searchby-pills">
+                    @foreach (var (val, lbl) in new[] { ("ten","Tên"), ("sdt","SĐT"), ("cccd","CCCD"), ("diachi","Địa chỉ") })
+                    {
+                        <label class="searchby-pill @(Model.SearchBy == val ? "is-active" : "")">
+                            <input type="radio" name="searchBy" value="@val" @(Model.SearchBy == val ? "checked" : "") hidden />
+                            @lbl
+                        </label>
+                    }
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="search-submit-btn">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            Tìm kiếm
+        </button>
+    </form>
+</div>
+
+@if (Model.HasSearched)
+{
+    <div class="search-results-header">
+        <strong>@Model.Results.Count kết quả</strong> cho "<em>@Model.Keyword</em>"
+    </div>
+
+    @if (Model.Results.Count == 0)
+    {
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <p>Không tìm thấy khách hàng phù hợp</p>
+        </div>
+    }
+    else
+    {
+        <div class="search-results-grid">
+            @foreach (var k in Model.Results)
+            {
+                var tongGiao = k.TongChiCaPhe + k.TongChiTieu;
+                var soPhieu  = k.SoPhieuCaPhe + k.SoPhieuTieu;
+                <div class="customer-card">
+                    <div class="customer-card__head">
+                        <div class="cust-avatar cust-avatar--lg" style="--av-color:@AvatarColor(k.CustomerID)">
+                            @k.TenKhachHang.Substring(0,1).ToUpper()
+                        </div>
+                        <div>
+                            <strong class="customer-card__name">@k.TenKhachHang</strong>
+                            <span class="customer-card__id">#@k.CustomerID</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(k.GioiTinh))
+                        {
+                            <span class="gender-badge gender-badge--@k.GioiTinh.ToLower() ml-auto">@k.GioiTinh</span>
+                        }
+                    </div>
+                    <div class="customer-card__body">
+                        @if (!string.IsNullOrEmpty(k.SDT))
+                        {
+                            <div class="customer-card__row">
+                                <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.7 5.7 19.79 19.79 0 01.67 2.09 2 2 0 012.64.03h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.29 6.29l1.08-1.08a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                                <span>@k.SDT</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(k.DiaChi))
+                        {
+                            <div class="customer-card__row">
+                                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <span>@k.DiaChi</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(k.CCCD))
+                        {
+                            <div class="customer-card__row">
+                                <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                                <span>@k.CCCD</span>
+                            </div>
+                        }
+                    </div>
+                    @if (tongGiao > 0)
+                    {
+                        <div class="customer-card__footer">
+                            <div class="customer-card__stat">
+                                <span>Tổng giao dịch</span>
+                                <strong>@Fmt(tongGiao) đ</strong>
+                            </div>
+                            <div class="customer-card__stat">
+                                <span>Số phiếu</span>
+                                <strong>@soPhieu</strong>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+}
+
+@functions {
+    static string AvatarColor(int id) => (id % 6) switch {
+        0 => "#2563eb", 1 => "#7c3aed", 2 => "#0891b2",
+        3 => "#16a34a", 4 => "#d97706", _ => "#dc2626"
+    };
+}

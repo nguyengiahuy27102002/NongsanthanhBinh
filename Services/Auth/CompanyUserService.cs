@@ -1,37 +1,68 @@
 using DuongVanDung.WebApp.Models.Auth;
-using Microsoft.Extensions.Options;
+using Microsoft.Data.SqlClient;
 
 namespace DuongVanDung.WebApp.Services.Auth;
 
 public sealed class CompanyUserService : ICompanyUserService
 {
-    private readonly CompanyAuthOptions _options;
-    private readonly IPasswordHashService _passwordHashService;
+    private readonly string _connStr;
+    private readonly IPasswordHashService _hasher;
 
-    public CompanyUserService(
-        IOptions<CompanyAuthOptions> options,
-        IPasswordHashService passwordHashService)
+    public CompanyUserService(IConfiguration cfg, IPasswordHashService hasher)
     {
-        _options = options.Value;
-        _passwordHashService = passwordHashService;
+        _connStr = cfg.GetConnectionString("DefaultConnection")
+                   ?? throw new InvalidOperationException("Missing DefaultConnection");
+        _hasher = hasher;
     }
 
     public CompanyUserRecord? ValidateCredentials(string username, string password)
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            return null;
+
+        try
+        {
+            using var cn = new SqlConnection(_connStr);
+            cn.Open();
+
+            using var cmd = cn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT Username, DisplayName, PasswordSalt, PasswordHash, Roles
+                FROM TaiKhoan
+                WHERE Username = @u AND IsActive = 1";
+            cmd.Parameters.AddWithValue("@u", username.Trim().ToLower());
+
+            using var r = cmd.ExecuteReader();
+            if (!r.Read()) return null;
+
+            var user = new CompanyUserRecord
+            {
+                Username     = r.GetString(0),
+                DisplayName  = r.GetString(1),
+                PasswordSalt = r.GetString(2),
+                PasswordHash = r.GetString(3),
+                Roles        = r.GetString(4).Split(',', StringSplitOptions.RemoveEmptyEntries)
+            };
+
+            return _hasher.Verify(password, user.PasswordSalt, user.PasswordHash) ? user : null;
+        }
+        catch
         {
             return null;
         }
+    }
 
-        CompanyUserRecord? user = _options.Users.FirstOrDefault(x =>
-            string.Equals(x.Username, username.Trim(), StringComparison.OrdinalIgnoreCase));
-
-        if (user is null)
+    public async Task UpdateLastLoginAsync(string username)
+    {
+        try
         {
-            return null;
+            await using var cn = new SqlConnection(_connStr);
+            await cn.OpenAsync();
+            await using var cmd = cn.CreateCommand();
+            cmd.CommandText = "UPDATE TaiKhoan SET NgayDangNhapCuoi = GETDATE() WHERE Username = @u";
+            cmd.Parameters.AddWithValue("@u", username.ToLower());
+            await cmd.ExecuteNonQueryAsync();
         }
-
-        bool isValid = _passwordHashService.Verify(password, user.PasswordSalt, user.PasswordHash);
-        return isValid ? user : null;
+        catch { /* không chặn login nếu update thất bại */ }
     }
 }

@@ -1,0 +1,74 @@
+@* Shared context menu + page shell for all Customer pages *@
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+
+<div class="cust-shell" id="custShell">
+
+    <!-- ── CONTEXT MENU ─────────────────────────────────────────────────── -->
+    <div id="ctxMenu" class="ctx-menu" role="menu" aria-label="Menu khách hàng">
+        <div class="ctx-menu__header">
+            <span>Khách hàng</span>
+        </div>
+        <a asp-controller="Customer" asp-action="Index" class="ctx-menu__item @(currentAction == "Index" ? "is-active" : "")">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            <span>Danh sách khách hàng</span>
+        </a>
+        <a asp-controller="Customer" asp-action="Search" class="ctx-menu__item @(currentAction == "Search" ? "is-active" : "")">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <span>Tìm khách hàng</span>
+        </a>
+        <div class="ctx-menu__divider"></div>
+        <div class="ctx-menu__section">Báo cáo</div>
+        <a asp-controller="Customer" asp-action="Analysis" class="ctx-menu__item @(currentAction == "Analysis" ? "is-active" : "")">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>Phân tích khách hàng</span>
+        </a>
+        <a asp-controller="Customer" asp-action="Financial" class="ctx-menu__item @(currentAction == "Financial" ? "is-active" : "")">
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M12 12v4M10 14h4"/></svg>
+            <span>Báo cáo tài chính</span>
+        </a>
+        <a asp-controller="Customer" asp-action="Behavior" class="ctx-menu__item @(currentAction == "Behavior" ? "is-active" : "")">
+            <svg viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+            <span>Báo cáo hành vi</span>
+        </a>
+    </div>
+
+    <!-- ── OVERLAY (backdrop) ────────────────────────────────────────────── -->
+    <div id="ctxOverlay" class="ctx-overlay" hidden></div>
+
+    <!-- ── PAGE CONTENT ─────────────────────────────────────────────────── -->
+    <div class="cust-content">
+        @RenderBody()
+    </div>
+</div>
+
+<script>
+(function () {
+    var menu   = document.getElementById('ctxMenu');
+    var overlay = document.getElementById('ctxOverlay');
+    var shell  = document.getElementById('custShell');
+
+    function showMenu(x, y) {
+        menu.style.left = Math.min(x, window.innerWidth  - menu.offsetWidth  - 8) + 'px';
+        menu.style.top  = Math.min(y, window.innerHeight - menu.offsetHeight - 8) + 'px';
+        menu.classList.add('is-open');
+        overlay.hidden = false;
+    }
+
+    function hideMenu() {
+        menu.classList.remove('is-open');
+        overlay.hidden = true;
+    }
+
+    shell.addEventListener('contextmenu', function (e) {
+        // don't intercept on inputs / buttons
+        if (e.target.closest('a,button,input,select,textarea')) return;
+        e.preventDefault();
+        showMenu(e.clientX, e.clientY);
+    });
+
+    overlay.addEventListener('click', hideMenu);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideMenu(); });
+})();
+</script>
